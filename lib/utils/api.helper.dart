@@ -7,6 +7,7 @@ import 'package:infiudo/models/mapper.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:json_by_path/json_by_path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/watch.dart';
 
@@ -29,16 +30,31 @@ class ApiHelper {
     return await DbHive().delete<Result>(result.id!, boxModifier: 'favorites');
   }
 
+  Future<List<Result>> getAllCurrentResults() async {
+    List<Watch> allWatches = await DbHive().getAll<Watch>();
+    List<Result> currentResults = <Result>[];
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final lastWatchDateMillis = prefs.getInt('last_watch_date');
+    DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
+    for (Watch w in allWatches) {
+      currentResults.addAll(await DbHive().getWhere<Result>((K, element) => element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0, boxModifier: w.id));
+    }
+    return currentResults;
+  }
+
   Future<List<Result>> watchAll() async {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> newResults = <Result>[];
+    DateTime now = DateTime.now();
     for (Watch w in allWatches) {
-      newResults.addAll(await watch(w));
+      newResults.addAll(await watch(w, now));
     }
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt('last_watch_date', now.millisecondsSinceEpoch);
     return newResults;
   }
 
-  Future<List<Result>> watch(Watch w) async {
+  Future<List<Result>> watch(Watch w, DateTime watchDate) async {
     Service? srv = await DbHive().get<Service>(w.serviceId);
     srv!;
     Mapper? mppr = await DbHive().get<Mapper>(srv.defaultMapperId);
@@ -62,7 +78,7 @@ class ApiHelper {
           }
           Result? existingResult = await DbHive().get<Result>(itemId, boxModifier: w.id);
           if (existingResult == null) {
-            newResults.add(Result(id: itemId, serviceId: srv.id!, data: mappedObj));
+            newResults.add(Result(id: itemId, serviceId: srv.id!, lastModified: watchDate, data: mappedObj));
           } else {
             bool hasChanged = false;
             for (CompareMapping c in mppr.compareMappings) {
@@ -95,9 +111,11 @@ class ApiHelper {
             }
 
             if (hasChanged) {
+              existingResult.lastModified = watchDate;
               newResults.add(existingResult);
             }
             if (favorites.any((item) => item.id == itemId)) {
+              existingResult.lastModified = watchDate;
               await saveFavorite(existingResult);
             }
           }

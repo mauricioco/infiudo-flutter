@@ -9,11 +9,13 @@ enum ResultType {json, jsonarray, html}
 @JsonSerializable(anyMap: true)
 class Result extends Model {
   String serviceId;
+  DateTime? lastModified;
   Map<dynamic, dynamic> data;
   
   Result({
     super.id,
     required this.serviceId,
+    this.lastModified,
     required this.data,
   });
 

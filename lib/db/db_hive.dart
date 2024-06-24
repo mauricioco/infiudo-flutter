@@ -57,6 +57,22 @@ class DbHive {
     return item;
   }
 
+  Future<List<T>> getWhere<T extends Model>(bool Function(dynamic K, T element) where, {String? boxModifier}) async {
+    String boxName = getBoxName<T>();
+    var box = await _openBox(boxName, boxModifier: boxModifier);
+    List<T> items = [];
+    var boxMap = box.toMap();
+    boxMap.forEach((key, value) {
+      final T item = Model.fromJson<T>(key, value);
+      if(where(key, item)) {
+        item.id = key;
+        items.add(item);
+      }
+    });
+    //await box.close();
+    return items;
+  }
+
   Future<List<T>> getAll<T extends Model>({String? boxModifier}) async {
     String boxName = getBoxName<T>();
     var box = await _openBox(boxName, boxModifier: boxModifier);

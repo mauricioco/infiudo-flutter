@@ -122,6 +122,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
   }
 
   Future<void> _initState() async {
+    newResults = await ApiHelper().getAllCurrentResults();
     favoriteResults = await DbHive().getAll<Result>(boxModifier: 'favorites');
     for (Result r in favoriteResults) {
       if (!services.containsKey(r.serviceId)) {
