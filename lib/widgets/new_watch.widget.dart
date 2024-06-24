@@ -33,7 +33,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
   }
 
   finishSaving(BuildContext context, Watch w) {
-    ApiHelper().watch(w, DateTime.now()).then((value) => Navigator.pop(context));
+    ApiHelper().watch(w, DateTime.now(), context).then((value) => Navigator.pop(context));
   }
   
   @override

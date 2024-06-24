@@ -1,12 +1,15 @@
 
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:infiudo/app_state.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:json_by_path/json_by_path.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/watch.dart';
@@ -42,19 +45,20 @@ class ApiHelper {
     return currentResults;
   }
 
-  Future<List<Result>> watchAll() async {
+  Future<List<Result>> watchAll(BuildContext context) async {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> newResults = <Result>[];
     DateTime now = DateTime.now();
     for (Watch w in allWatches) {
-      newResults.addAll(await watch(w, now));
+      // ignore: use_build_context_synchronously
+      newResults.addAll(await watch(w, now, context));
     }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('last_watch_date', now.millisecondsSinceEpoch);
+    prefs.setInt('last_watch_date', now.millisecond);
     return newResults;
   }
 
-  Future<List<Result>> watch(Watch w, DateTime watchDate) async {
+  Future<List<Result>> watch(Watch w, DateTime watchDate, BuildContext context) async {
     Service? srv = await DbHive().get<Service>(w.serviceId);
     srv!;
     Mapper? mppr = await DbHive().get<Mapper>(srv.defaultMapperId);
@@ -122,8 +126,9 @@ class ApiHelper {
         }
         totalValue = jbp.getValue<int>(json, srv.totalKey)!;
         currOffset += srv.offsetPerPage;   //TODO offsetperpage should be jsnonpath to "limit"
-        url = '${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset';
-        print('next: $url');
+        // ignore: use_build_context_synchronously
+        Provider.of<AppState>(context, listen: false).appendLog('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset');
+        print('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset');
       } else {
         throw Exception('Failed to load request');
       }

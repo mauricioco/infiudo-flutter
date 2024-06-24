@@ -137,7 +137,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
     setState(() {
       isLoading = true;
     });
-    List<Result> newIn = await ApiHelper().watchAll();
+    List<Result> newIn = await ApiHelper().watchAll(context);
     List<Result> favorites = await DbHive().getAll<Result>(boxModifier: 'favorites');
 
     for (Result r in newIn) {

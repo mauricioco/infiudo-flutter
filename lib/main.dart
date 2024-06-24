@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:infiudo/app_state.dart';
 import 'package:infiudo/utils/preset.helper.dart';
 import 'package:infiudo/widgets/home.widget.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   await Hive.initFlutter();
   await PresetHelper().createDefaultService();
-  runApp(const MyApp());
+  //runApp(const MyApp());
+  runApp(ChangeNotifierProvider(
+    create: (context) => AppState(),
+    child: const MyApp()
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
