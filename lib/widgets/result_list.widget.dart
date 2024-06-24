@@ -83,7 +83,10 @@ class _ResultListItemState extends State<ResultListItem> {
         height: 128,
           child: Center(
             child: ListTile(
-              leading: Image.network(widget.getThumbnailUrl()),
+              leading: SizedBox(
+                width: 64,
+                child: Image.network(widget.getThumbnailUrl(), fit: BoxFit.contain),
+              ),
               title: Text(widget.getTitle()),
               subtitle: Text(widget.getSubtitle()),
               trailing: IconButton(
@@ -124,6 +127,11 @@ class ResultListWidgetState extends State<ResultListWidget> {
   Future<void> _initState() async {
     newResults = await ApiHelper().getAllCurrentResults();
     favoriteResults = await DbHive().getAll<Result>(boxModifier: 'favorites');
+
+    Map<String, Result> newUniqueResults = {};
+    for(Result r in newResults) { newUniqueResults[r.id!] = r; }
+    newResults = newUniqueResults.values.toList();
+
     for (Result r in favoriteResults) {
       if (!services.containsKey(r.serviceId)) {
         services[r.serviceId] = (await DbHive().get<Service>(r.serviceId))!;
@@ -139,6 +147,10 @@ class ResultListWidgetState extends State<ResultListWidget> {
     });
     List<Result> newIn = await ApiHelper().watchAll(context);
     List<Result> favorites = await DbHive().getAll<Result>(boxModifier: 'favorites');
+
+    Map<String, Result> newUniqueResults = {};
+    for(Result r in newIn) { newUniqueResults[r.id!] = r; }
+    newIn = newUniqueResults.values.toList();
 
     for (Result r in newIn) {
       if (!services.containsKey(r.serviceId)) {
