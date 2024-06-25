@@ -12,7 +12,7 @@ class WatchListItem extends StatelessWidget {
   final Watch watch;
   final String thumbnailUrl;    // Either service thumbnail or custom
   
-  WatchListItem.fromWatch(this.watch, this.thumbnailUrl, {super.key, required this.onDeleteClicked});
+  const WatchListItem.fromWatch(this.watch, this.thumbnailUrl, {super.key, required this.onDeleteClicked});
   
   @override
   Widget build(BuildContext context) {

@@ -23,16 +23,7 @@ class ApiHelper {
   factory ApiHelper() {
     return _apiHelper;
   }
-
-  // TODO: change way to save favorites so it's not saving duplicates
-  Future<Result> saveFavorite(Result result) async {
-    return await DbHive().save(result, boxModifier: 'favorites');
-  }
-
-  Future<Result?> removeFavorite(Result result) async {
-    return await DbHive().delete<Result>(result.id!, boxModifier: 'favorites');
-  }
-
+  
   Future<List<Result>> getAllCurrentResults() async {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> currentResults = <Result>[];
@@ -40,8 +31,15 @@ class ApiHelper {
     final lastWatchDateMillis = prefs.getInt('last_watch_date');
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
     for (Watch w in allWatches) {
-      currentResults.addAll(await DbHive().getWhere<Result>((K, element) => element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0, boxModifier: w.id));
+      currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
+          return element.favorite! || (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
+      }, boxModifier: w.id));
     }
+    currentResults.sort((a, b) {
+      if (b.favorite!) return -1;
+      if (a.favorite!) return 1;
+      return 0;
+    } );
     return currentResults;
   }
 
@@ -54,7 +52,7 @@ class ApiHelper {
       newResults.addAll(await watch(w, now, context));
     }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('last_watch_date', now.millisecond);
+    await prefs.setInt('last_watch_date', now.millisecond);
     return newResults;
   }
 
@@ -63,7 +61,6 @@ class ApiHelper {
     srv!;
     Mapper? mppr = await DbHive().get<Mapper>(srv.defaultMapperId);
     mppr!;
-    List<Result> favorites = await DbHive().getAll<Result>(boxModifier: 'favorites');
     var currOffset = 0, totalValue = 0, newResults = <Result>[];
     String url = '${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset';
     JsonByPath jbp = JsonByPath();
@@ -82,7 +79,7 @@ class ApiHelper {
           }
           Result? existingResult = await DbHive().get<Result>(itemId, boxModifier: w.id);
           if (existingResult == null) {
-            newResults.add(Result(id: itemId, serviceId: srv.id!, lastModified: watchDate, data: mappedObj));
+            newResults.add(Result(id: itemId, serviceId: srv.id!, watchId: w.id!, favorite: false, lastModified: watchDate, data: mappedObj));
           } else {
             bool hasChanged = false;
             for (CompareMapping c in mppr.compareMappings) {
@@ -117,10 +114,6 @@ class ApiHelper {
             if (hasChanged) {
               existingResult.lastModified = watchDate;
               newResults.add(existingResult);
-            }
-            if (favorites.any((item) => item.id == itemId)) {
-              existingResult.lastModified = watchDate;
-              await saveFavorite(existingResult);
             }
           }
         }

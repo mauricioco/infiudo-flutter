@@ -12,10 +12,8 @@ class ResultListItem extends StatefulWidget {
   
   final Result result;
   final UIMapper uiMapper;
-
-  final bool favorite;
   
-  const ResultListItem.fromResult(this.result, this.uiMapper, this.favorite, {super.key});
+  const ResultListItem.fromResult(this.result, this.uiMapper, {super.key});
 
   String getId() {
     return result.id!;
@@ -52,22 +50,15 @@ class ResultListItem extends StatefulWidget {
 }
 
 class _ResultListItemState extends State<ResultListItem> {
-  bool favorite = false;
-
-  Future<void> setFavorite() async {
-    if (favorite) {
-      await DbHive().delete<Result>(widget.result.id!, boxModifier: 'favorites');
-    } else {
-      await DbHive().save<Result>(widget.result, boxModifier: 'favorites');
-    }
-    setState(() {
-      favorite = !favorite;
-    });
-  }
 
   @override void initState() {
     super.initState();
-    favorite = widget.favorite;
+  }
+
+  Future<void> setFavorite() async {
+    widget.result.favorite = !widget.result.favorite!;
+    await DbHive().save<Result>(widget.result, boxModifier: widget.result.watchId);
+    setState(() {});
   }
 
   @override
@@ -93,7 +84,7 @@ class _ResultListItemState extends State<ResultListItem> {
                       onPressed: () async {
                         await setFavorite();
                       },
-                      icon: favorite ? const Icon(Icons.star_rounded) : const Icon(Icons.star_border_rounded),
+                      icon: widget.result.favorite! ? const Icon(Icons.star_rounded) : const Icon(Icons.star_border_rounded),
               ),
             ),
           ),
@@ -112,7 +103,6 @@ class ResultListWidget extends StatefulWidget {
 class ResultListWidgetState extends State<ResultListWidget> {
 
   List<Result> newResults = <Result>[];
-  List<Result> favoriteResults = <Result>[];
 
   Map<String, Service> services = <String, Service>{};
   Map<String, UIMapper> uiMappers = <String, UIMapper>{};
@@ -126,13 +116,14 @@ class ResultListWidgetState extends State<ResultListWidget> {
 
   Future<void> _initState() async {
     newResults = await ApiHelper().getAllCurrentResults();
-    favoriteResults = await DbHive().getAll<Result>(boxModifier: 'favorites');
 
+    // Filter repeating results
     Map<String, Result> newUniqueResults = {};
     for(Result r in newResults) { newUniqueResults[r.id!] = r; }
     newResults = newUniqueResults.values.toList();
 
-    for (Result r in favoriteResults) {
+    // TODO review this way of getting services and uimappers
+    for (Result r in newResults) {
       if (!services.containsKey(r.serviceId)) {
         services[r.serviceId] = (await DbHive().get<Service>(r.serviceId))!;
         uiMappers[r.serviceId] = (await DbHive().get<UIMapper>(services[r.serviceId]!.defaultUIMapperId))!;
@@ -145,9 +136,9 @@ class ResultListWidgetState extends State<ResultListWidget> {
     setState(() {
       isLoading = true;
     });
-    List<Result> newIn = await ApiHelper().watchAll(context);
-    List<Result> favorites = await DbHive().getAll<Result>(boxModifier: 'favorites');
 
+    List<Result> newIn = await ApiHelper().watchAll(context);
+    // Filter repeating results
     Map<String, Result> newUniqueResults = {};
     for(Result r in newIn) { newUniqueResults[r.id!] = r; }
     newIn = newUniqueResults.values.toList();
@@ -160,8 +151,8 @@ class ResultListWidgetState extends State<ResultListWidget> {
     }
 
     setState(() {
-      newResults = newIn;
-      favoriteResults = favorites;
+      newResults.removeWhere((e) => !e.favorite!);
+      newResults.addAll(newIn);
       isLoading = false;
     });
   }
@@ -181,13 +172,9 @@ class ResultListWidgetState extends State<ResultListWidget> {
             ),
             child: ListView.separated(
               
-              itemCount: newResults.length + favoriteResults.length,
+              itemCount: newResults.length,
               itemBuilder: (BuildContext context, int index) {
-                if (index < newResults.length) {
-                  return ResultListItem.fromResult(newResults[index], uiMappers[newResults[index].serviceId]!, false, key: ObjectKey(newResults[index]));
-                } else {
-                  return ResultListItem.fromResult(favoriteResults[index-newResults.length], uiMappers[favoriteResults[index-newResults.length].serviceId]!, true, key: ObjectKey(favoriteResults[index-newResults.length]));
-                }
+                return ResultListItem.fromResult(newResults[index], uiMappers[newResults[index].serviceId]!, key: ObjectKey(newResults[index]));
               },
               separatorBuilder: (context, index) {
                 return const Divider(height: 1);

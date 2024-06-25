@@ -11,10 +11,14 @@ Result _$ResultFromJson(Map json) => Result(
       data: json['data'] as Map,
     )
       ..id = json['id'] as String?
-      ..lastModified = json['lastModified'] as DateTime?;
+      ..lastModified = json['lastModified'] as DateTime?
+      ..favorite = json['favorite'] as bool?
+      ..watchId = json['watchId'] as String?;
 
 Map<String, dynamic> _$ResultToJson(Result instance) => <String, dynamic>{
       'serviceId': instance.serviceId,
-      'data': instance.data,
+      'watchId': instance.watchId,
+      'favorite': instance.favorite,
       'lastModified': instance.lastModified,
+      'data': instance.data,
     };

@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
+import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
+import 'package:infiudo/models/watch.dart';
 
 class PresetHelper {
   
@@ -16,11 +18,38 @@ class PresetHelper {
     return _presetHelper;
   }
 
+  Future updateAllResults() async {
+    List<Watch> allWatches = await DbHive().getAll<Watch>();
+    List<Result> allResults = <Result>[];
+
+    List<Result> favorites = await DbHive().getAll<Result>(boxModifier: 'favorites');
+    var favoriteMap = {};
+    for (Result f in favorites) {
+      favoriteMap[f.id] = f;
+    }
+    
+    for (Watch w in allWatches) {
+      var resultsInWatch = await DbHive().getAll<Result>(boxModifier: w.id);
+      for (var r in resultsInWatch) {
+        r.watchId = w.id!;
+        r.favorite = favoriteMap.containsKey(r.id);
+      }
+      allResults.addAll(resultsInWatch);
+    }
+    
+    for (Result r in allResults) {
+      await DbHive().save(r, boxModifier: r.watchId);
+    }
+    
+  }
+
   Future createDefaultService() async {
 
-    DbHive().deleteAll<Service>();
-    DbHive().deleteAll<Mapper>();
-    DbHive().deleteAll<UIMapper>();
+    //DbHive().deleteAll<Service>();
+    //DbHive().deleteAll<Mapper>();
+    //DbHive().deleteAll<UIMapper>();
+
+    //await updateAllResults();
 
     final String presetUIMappersString = await rootBundle.loadString('assets/preset_ui_mappers.json');
     final String presetMappersString = await rootBundle.loadString('assets/preset_mappers.json');

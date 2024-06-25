@@ -11,7 +11,8 @@ Watch _$WatchFromJson(Map json) => Watch(
       query: json['query'] as String,
       mapperId: json['mapperId'] as String?,
       postMapperId: json['postMapperId'] as String?,
-    );
+    )
+      ..id = json['id'] as String?;
 
 Map<String, dynamic> _$WatchToJson(Watch instance) => <String, dynamic>{
       'serviceId': instance.serviceId,
