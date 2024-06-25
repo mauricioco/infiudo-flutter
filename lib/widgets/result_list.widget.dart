@@ -134,7 +134,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
 
     setState(() {
       newResults.removeWhere((e) => !e.favorite);
-      newResults.addAll(newIn);
+      newResults = [...newIn, ...newResults];
       Provider.of<AppState>(context, listen: false).isWatching = false;
     });
   }

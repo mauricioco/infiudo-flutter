@@ -77,11 +77,11 @@ class ApiHelper {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> currentResults = <Result>[];
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final lastWatchDateMillis = prefs.getInt('last_watch_date');
+    final int? lastWatchDateMillis = prefs.getInt('last_watch_date');
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
     for (Watch w in allWatches) {
       currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
-          return element.favorite|| (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
+          return element.favorite || (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
       }, boxModifier: w.id));
     }
     currentResults.sort((a, b) {
@@ -101,7 +101,7 @@ class ApiHelper {
       newResults.addAll(await watch(w, now, context));
     }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('last_watch_date', now.millisecond);
+    await prefs.setInt('last_watch_date', now.millisecondsSinceEpoch);
     return newResults;
   }
 
