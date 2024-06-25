@@ -1,32 +1,41 @@
 import 'package:flutter/foundation.dart';
 
 class AppState extends ChangeNotifier {
-  //TODO bring isLoading here
   static const int maxLines = 5;
   
-  List<String> log = <String>[];
+  List<String> _log = <String>[];
+  bool _isWatching = false;
 
   AppState();
 
   String get displayLog {
-    if (log.length > maxLines) {
-      return log.skip(1).join('\n');
+    if (_log.length > maxLines) {
+      return _log.skip(1).join('\n');
     } else {
-      return log.join('\n');
+      return _log.join('\n');
     }
   }
 
+  bool get isWatching {
+    return _isWatching;
+  }
+
+  set isWatching(bool isWatching) {
+    _isWatching = isWatching;
+    notifyListeners();
+  }
+
   void appendLog(String newLine) {
-    if (log.length >= maxLines+1) {
-      log.removeAt(0);
+    if (_log.length >= maxLines+1) {
+      _log.removeAt(0);
     }
-    log.add(newLine);
+    _log.add(newLine);
     notifyListeners();
   }
 
   void removeFirstLine() {
-    if (log.isNotEmpty) {
-      log.removeAt(0);
+    if (_log.isNotEmpty) {
+      _log.removeAt(0);
       notifyListeners();
     }
   }

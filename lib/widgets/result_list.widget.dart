@@ -1,9 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:infiudo/app_state.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/ui_mapper.dart';
 import 'package:infiudo/utils/api.helper.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ResultListItem extends StatefulWidget {
@@ -101,9 +103,7 @@ class ResultListWidget extends StatefulWidget {
 class ResultListWidgetState extends State<ResultListWidget> {
 
   List<Result> newResults = <Result>[];
-
-  bool isLoading = false;
-
+  
   @override void initState() {
     super.initState();
     _initState();
@@ -121,8 +121,9 @@ class ResultListWidgetState extends State<ResultListWidget> {
   }
 
   Future<void> _handleRefresh() async {
+    
     setState(() {
-      isLoading = true;
+      Provider.of<AppState>(context, listen: false).isWatching = true;
     });
 
     List<Result> newIn = await ApiHelper().watchAll(context);
@@ -134,7 +135,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
     setState(() {
       newResults.removeWhere((e) => !e.favorite);
       newResults.addAll(newIn);
-      isLoading = false;
+      Provider.of<AppState>(context, listen: false).isWatching = false;
     });
   }
 
@@ -163,12 +164,6 @@ class ResultListWidgetState extends State<ResultListWidget> {
             ),
           ),
         ),
-        if (isLoading)
-        // TODO improve this loading animation!
-          const Opacity(
-            opacity: 0.5,
-            child: ModalBarrier(dismissible: false, color: Colors.black)
-        )
       ]
     );
   }
