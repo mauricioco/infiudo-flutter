@@ -40,96 +40,112 @@ class _HomeWidgetState extends State<HomeWidget> {
     });
   }
 
+  Future<bool> _onWillPop() async {
+    if (_selectedIndex != 0) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-          body: Stack(
-            children: [
-              SafeArea(
-                child:IndexedStack(
-                  index: _selectedIndex, 
-                  children:[
-                    const ResultListWidget(),
-                    WatchListWidget(key: ValueKey(_countHack)),
-                    //const ServiceListWidget(),
-                  ]
-                )
-              ),
-              Consumer<AppState>(
-                builder: (context, appState, child) {
-                  if (appState.isWatching) {
-                    return const Opacity(
-                      opacity: 0.5,
-                      child: ModalBarrier(dismissible: false, color: Colors.black)
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              )
-            ]
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'New In',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.visibility),
-                label: 'Watches',
-              ),
-              //BottomNavigationBarItem(
-              //  icon: Icon(Icons.public),
-              //  label: 'Services',
-              //),
-            ],
-            currentIndex: _selectedIndex,
-            selectedItemColor: Colors.deepPurpleAccent,
-            onTap: _onItemTapped,
-          ),
-          floatingActionButton: _showFab ? FloatingActionButton(
-            onPressed: () {
-              _countHack++;
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const NewWatchWidget())).then((_) => setState(() {}));
-            },
-            child: const Icon(Icons.add),
-          ) : null,
-        ),
-        Consumer<AppState>(
-          builder: (context, appState, child) {
-            if (appState.isWatching) {
-              return const Opacity(
-                opacity: 0.5,
-                child: ModalBarrier(dismissible: false, color: Colors.black)
-              );
-            }
-            return const SizedBox.shrink();
-          }
-        ),
-        IgnorePointer(
-          ignoring: true,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 256, minHeight: 0),
-            child:
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.5),
-                ),
-                child:
-                  Consumer<AppState>(
-                    builder: (context, appState, child) {
-                      return DefaultTextStyle(
-                          style: const TextStyle(fontSize: 14),
-                          child: Text(appState.displayLog)
-                      );
-                    },
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: 
+        Stack(
+        children: [
+          Scaffold(
+            body: Stack(
+              children: [
+                SafeArea(
+                  child:IndexedStack(
+                    index: _selectedIndex, 
+                    children:[
+                      const ResultListWidget(),
+                      WatchListWidget(key: ValueKey(_countHack)),
+                      //const ServiceListWidget(),
+                    ]
                   )
-              )
-          )
-        ),
-      ]
+                ),
+                Consumer<AppState>(
+                  builder: (context, appState, child) {
+                    if (appState.isWatching) {
+                      return const Opacity(
+                        opacity: 0.5,
+                        child: ModalBarrier(dismissible: false, color: Colors.black)
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                )
+              ]
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'New In',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.visibility),
+                  label: 'Watches',
+                ),
+                //BottomNavigationBarItem(
+                //  icon: Icon(Icons.public),
+                //  label: 'Services',
+                //),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Colors.deepPurpleAccent,
+              onTap: _onItemTapped,
+            ),
+            floatingActionButton: _showFab ? FloatingActionButton(
+              onPressed: () {
+                _countHack++;
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NewWatchWidget())).then((_) => setState(() {}));
+              },
+              child: const Icon(Icons.add),
+            ) : null,
+          ),
+          Consumer<AppState>(
+            builder: (context, appState, child) {
+              if (appState.isWatching) {
+                return const Opacity(
+                  opacity: 0.5,
+                  child: ModalBarrier(dismissible: false, color: Colors.black)
+                );
+              }
+              return const SizedBox.shrink();
+            }
+          ),
+          IgnorePointer(
+            ignoring: true,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 256, minHeight: 0),
+              child:
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.5),
+                  ),
+                  child:
+                    Consumer<AppState>(
+                      builder: (context, appState, child) {
+                        return DefaultTextStyle(
+                            style: const TextStyle(fontSize: 14),
+                            child: Text(appState.displayLog)
+                        );
+                      },
+                    )
+                )
+            )
+          ),
+        ]
+      )
     );
   }
 }
