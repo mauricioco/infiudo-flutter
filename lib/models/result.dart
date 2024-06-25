@@ -8,17 +8,15 @@ enum ResultType {json, jsonarray, html}
 
 @JsonSerializable(anyMap: true)
 class Result extends Model {
-  String serviceId;
-  String? watchId;
-  bool? favorite;
+  String watchId;
+  bool favorite;
   DateTime? lastModified;
   Map<dynamic, dynamic> data;
   
   Result({
     super.id,
-    required this.serviceId,
-    this.watchId,
-    this.favorite,
+    required this.watchId,
+    required this.favorite,
     this.lastModified,
     required this.data,
   });

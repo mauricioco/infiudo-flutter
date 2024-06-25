@@ -7,16 +7,14 @@ part of 'result.dart';
 // **************************************************************************
 
 Result _$ResultFromJson(Map json) => Result(
-      serviceId: json['serviceId'] as String,
+      watchId: json['watchId'] as String,
+      favorite: json['favorite'] as bool,
       data: json['data'] as Map,
     )
       ..id = json['id'] as String?
-      ..lastModified = json['lastModified'] as DateTime?
-      ..favorite = json['favorite'] as bool?
-      ..watchId = json['watchId'] as String?;
+      ..lastModified = json['lastModified'] as DateTime?;
 
 Map<String, dynamic> _$ResultToJson(Result instance) => <String, dynamic>{
-      'serviceId': instance.serviceId,
       'watchId': instance.watchId,
       'favorite': instance.favorite,
       'lastModified': instance.lastModified,

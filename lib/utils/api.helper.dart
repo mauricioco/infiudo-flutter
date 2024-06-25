@@ -6,8 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:infiudo/app_state.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
+import 'package:infiudo/models/model.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
+import 'package:infiudo/models/ui_mapper.dart';
 import 'package:json_by_path/json_by_path.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,10 +22,57 @@ class ApiHelper {
 
   ApiHelper._internal();
 
+  final Map<String, Service> _serviceCache = {};
+  final Map<String, Watch> _watchCache = {};
+  final Map<String, Mapper> _mapperCache = {};
+  final Map<String, UIMapper> _uiMapperCache = {};
+
   factory ApiHelper() {
     return _apiHelper;
   }
-  
+
+  Future<void> updateCache() async {
+    for (var s in (await DbHive().getAll<Service>())) { _serviceCache[s.id!] = s; }
+    for (var w in (await DbHive().getAll<Watch>())) { _watchCache[w.id!] = w; }
+    for (var m in (await DbHive().getAll<Mapper>())) { _mapperCache[m.id!] = m; }
+    for (var um in (await DbHive().getAll<UIMapper>())) { _uiMapperCache[um.id!] = um; }
+  }
+
+  Future<T?> _getCached<T extends Model>(String id) async {
+    T? item = await DbHive().get<T>(id);
+    switch(T) {
+      case Service:
+        _serviceCache[id] = item as Service;
+      case Mapper:
+        _mapperCache[id] = item as Mapper;
+      case UIMapper:
+        _uiMapperCache[id] = item as UIMapper;
+      case Watch:
+        _watchCache[id] = item as Watch;
+      default:
+        throw UnimplementedError();
+    }
+    return item;
+  }
+
+  // TODO check for null items from dbhive
+  Future<UIMapper> getUIMapperForResult(Result r) async {
+    Watch? w = _watchCache[r.watchId];
+    w ??= await _getCached<Watch>(r.watchId);
+    Service? s = _serviceCache[w?.serviceId];
+    s ??= await _getCached<Service>(w!.serviceId);
+    UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
+    um ??= await _getCached<UIMapper>(s!.defaultUIMapperId);
+    return um!;   
+  }
+
+  UIMapper? getCachedUIMapperForResult(Result r) {
+    Watch? w = _watchCache[r.watchId];
+    Service? s = _serviceCache[w?.serviceId];
+    UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
+    return um!;
+  }
+
   Future<List<Result>> getAllCurrentResults() async {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> currentResults = <Result>[];
@@ -32,12 +81,12 @@ class ApiHelper {
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
     for (Watch w in allWatches) {
       currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
-          return element.favorite! || (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
+          return element.favorite|| (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
       }, boxModifier: w.id));
     }
     currentResults.sort((a, b) {
-      if (b.favorite!) return -1;
-      if (a.favorite!) return 1;
+      if (b.favorite) return -1;
+      if (a.favorite) return 1;
       return 0;
     } );
     return currentResults;
@@ -79,7 +128,7 @@ class ApiHelper {
           }
           Result? existingResult = await DbHive().get<Result>(itemId, boxModifier: w.id);
           if (existingResult == null) {
-            newResults.add(Result(id: itemId, serviceId: srv.id!, watchId: w.id!, favorite: false, lastModified: watchDate, data: mappedObj));
+            newResults.add(Result(id: itemId, watchId: w.id!, favorite: false, lastModified: watchDate, data: mappedObj));
           } else {
             bool hasChanged = false;
             for (CompareMapping c in mppr.compareMappings) {

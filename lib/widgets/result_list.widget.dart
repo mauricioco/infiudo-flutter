@@ -1,9 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/result.dart';
-import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
 import 'package:infiudo/utils/api.helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -56,7 +54,7 @@ class _ResultListItemState extends State<ResultListItem> {
   }
 
   Future<void> setFavorite() async {
-    widget.result.favorite = !widget.result.favorite!;
+    widget.result.favorite = !widget.result.favorite;
     await DbHive().save<Result>(widget.result, boxModifier: widget.result.watchId);
     setState(() {});
   }
@@ -84,7 +82,7 @@ class _ResultListItemState extends State<ResultListItem> {
                       onPressed: () async {
                         await setFavorite();
                       },
-                      icon: widget.result.favorite! ? const Icon(Icons.star_rounded) : const Icon(Icons.star_border_rounded),
+                      icon: widget.result.favorite ? const Icon(Icons.star_rounded) : const Icon(Icons.star_border_rounded),
               ),
             ),
           ),
@@ -104,9 +102,6 @@ class ResultListWidgetState extends State<ResultListWidget> {
 
   List<Result> newResults = <Result>[];
 
-  Map<String, Service> services = <String, Service>{};
-  Map<String, UIMapper> uiMappers = <String, UIMapper>{};
-
   bool isLoading = false;
 
   @override void initState() {
@@ -122,13 +117,6 @@ class ResultListWidgetState extends State<ResultListWidget> {
     for(Result r in newResults) { newUniqueResults[r.id!] = r; }
     newResults = newUniqueResults.values.toList();
 
-    // TODO review this way of getting services and uimappers
-    for (Result r in newResults) {
-      if (!services.containsKey(r.serviceId)) {
-        services[r.serviceId] = (await DbHive().get<Service>(r.serviceId))!;
-        uiMappers[r.serviceId] = (await DbHive().get<UIMapper>(services[r.serviceId]!.defaultUIMapperId))!;
-      }
-    }
     setState(() {});
   }
 
@@ -143,15 +131,8 @@ class ResultListWidgetState extends State<ResultListWidget> {
     for(Result r in newIn) { newUniqueResults[r.id!] = r; }
     newIn = newUniqueResults.values.toList();
 
-    for (Result r in newIn) {
-      if (!services.containsKey(r.serviceId)) {
-        services[r.serviceId] = (await DbHive().get<Service>(r.serviceId))!;
-        uiMappers[r.serviceId] = (await DbHive().get<UIMapper>(services[r.serviceId]!.defaultUIMapperId))!;
-      }
-    }
-
     setState(() {
-      newResults.removeWhere((e) => !e.favorite!);
+      newResults.removeWhere((e) => !e.favorite);
       newResults.addAll(newIn);
       isLoading = false;
     });
@@ -174,7 +155,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
               
               itemCount: newResults.length,
               itemBuilder: (BuildContext context, int index) {
-                return ResultListItem.fromResult(newResults[index], uiMappers[newResults[index].serviceId]!, key: ObjectKey(newResults[index]));
+                return ResultListItem.fromResult(newResults[index], ApiHelper().getCachedUIMapperForResult(newResults[index])!, key: ObjectKey(newResults[index]));
               },
               separatorBuilder: (context, index) {
                 return const Divider(height: 1);
