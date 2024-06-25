@@ -78,7 +78,11 @@ class _ResultListItemState extends State<ResultListItem> {
                 width: 64,
                 child: Image.network(widget.getThumbnailUrl(), fit: BoxFit.contain),
               ),
-              title: Text(widget.getTitle()),
+              title: Text(
+                widget.getTitle(),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+                ),
               subtitle: Text(widget.getSubtitle()),
               trailing: IconButton(
                       onPressed: () async {
