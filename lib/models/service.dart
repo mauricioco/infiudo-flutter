@@ -12,13 +12,9 @@ class Service extends Model {
   ServiceType type;
 
   String queryParamKey;
-  String offsetKey;   // TODO: include jsonpath in name
+  String offsetParamKey;
 
-  String resultsKey;  // TODO: include jsonpath in name
-  String totalKey;    // TODO: include jsonpath in name
-
-  int maximumResults;
-  int offsetPerPage;
+  int maximumResults;   // Some services prevent paging beyond a certain amount
 
   String defaultMapperId;
   String defaultUIMapperId;
@@ -31,11 +27,8 @@ class Service extends Model {
     required this.urlBase,
     required this.type,
     required this.queryParamKey,
-    required this.offsetKey,
-    required this.resultsKey,
-    required this.totalKey,
+    required this.offsetParamKey,
     required this.maximumResults,
-    required this.offsetPerPage,
     required this.defaultMapperId,
     required this.defaultUIMapperId,
     this.thumbnailUrl

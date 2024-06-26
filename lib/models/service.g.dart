@@ -11,11 +11,8 @@ Service _$ServiceFromJson(Map json) => Service(
       urlBase: json['urlBase'] as String,
       type: $enumDecode(_$ServiceTypeEnumMap, json['type']),
       queryParamKey: json['queryParamKey'] as String,
-      offsetKey: json['offsetKey'] as String,
-      resultsKey: json['resultsKey'] as String,
-      totalKey: json['totalKey'] as String,
+      offsetParamKey: json['offsetParamKey'] as String,
       maximumResults: json['maximumResults'] as int,
-      offsetPerPage: json['offsetPerPage'] as int,
       defaultMapperId: json['defaultMapperId'] as String,
       defaultUIMapperId: json['defaultUIMapperId'] as String
     )
@@ -27,11 +24,8 @@ Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
       'description': instance.description,
       'type': _$ServiceTypeEnumMap[instance.type]!,
       'queryParamKey': instance.queryParamKey,
-      'offsetKey': instance.offsetKey,
-      'resultsKey': instance.resultsKey,
-      'totalKey': instance.totalKey,
+      'offsetParamKey': instance.offsetParamKey,
       'maximumResults': instance.maximumResults,
-      'offsetPerPage': instance.offsetPerPage,
       'defaultMapperId': instance.defaultMapperId,
       'defaultUIMapperId': instance.defaultUIMapperId,
       'thumbnailUrl': instance.thumbnailUrl

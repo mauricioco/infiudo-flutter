@@ -56,6 +56,24 @@ class ApiHelper {
     return item;
   }
 
+  List<Service> getCachedServices() {
+    return List.from(_serviceCache.values);
+  }
+
+  Service? getCachedService(String id) {
+    return _serviceCache[id];
+  }
+
+  List<Watch> getCachedWatches() {
+    return List.from(_watchCache.values);
+  }
+
+  Future<Watch> deleteWatch(Watch w) async {
+    await DbHive().delete<Watch>(w.id!);
+    _watchCache.remove(w.id!);
+    return w;
+  }
+
   // TODO check for null items from dbhive
   Future<Watch> getWatchForResult(Result r) async {
     Watch? w = _watchCache[r.watchId];
@@ -71,12 +89,15 @@ class ApiHelper {
     s ??= await _getCached<Service>(w!.serviceId);
     UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
     um ??= await _getCached<UIMapper>(s!.defaultUIMapperId);
-    return um!;   
+    return um!;
   }
 
   UIMapper? getCachedUIMapperForResult(Result r) {
     Watch? w = _watchCache[r.watchId];
-    Service? s = _serviceCache[w?.serviceId];
+    if (w == null) {
+      return null;
+    }
+    Service? s = _serviceCache[w.serviceId];
     UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
     return um!;
   }
@@ -85,31 +106,32 @@ class ApiHelper {
     return _watchCache[r.watchId];
   }
 
+  Future<Result> updateResult(Result r) async {
+    return await DbHive().save<Result>(r, boxModifier: r.watchId);
+  }
+
   Future<List<Result>> getAllResults() async {
-    List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> results = <Result>[];
-    for (Watch w in allWatches) {
+    for (Watch w in _watchCache.values) {
       results.addAll(await DbHive().getAll<Result>(boxModifier: w.id));
     }
     return results;
   }
 
   Future<List<Result>> deleteAllResults() async {
-    List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> results = <Result>[];
-    for (Watch w in allWatches) {
+    for (Watch w in _watchCache.values) {
       await DbHive().deleteAll<Result>(boxModifier: w.id);
     }
     return results;
   }
 
   Future<List<Result>> getAllCurrentResults() async {
-    List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> currentResults = <Result>[];
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final int? lastWatchDateMillis = prefs.getInt('last_watch_date');
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
-    for (Watch w in allWatches) {
+    for (Watch w in _watchCache.values) {
       currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
           return element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0;
       }, boxModifier: w.id));
@@ -123,11 +145,16 @@ class ApiHelper {
     return currentResults;
   }
 
+  Future<Watch> saveNewWatch(Watch w) async {
+    Watch newWatch = await DbHive().save(w);
+    _watchCache[newWatch.id!] = newWatch;
+    return newWatch;
+  }
+
   Future<List<Result>> watchAll(BuildContext context) async {
-    List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> newResults = <Result>[];
     DateTime now = DateTime.now();
-    for (Watch w in allWatches) {
+    for (Watch w in _watchCache.values) {
       // ignore: use_build_context_synchronously
       newResults.addAll(await watch(w, now, context));
       w.lastWatch = now;
@@ -153,21 +180,17 @@ class ApiHelper {
     Mapper? mppr = await DbHive().get<Mapper>(srv.defaultMapperId);
     mppr!;
     var currOffset = 0, totalValue = 0, newResults = <Result>[];
-    String url = '${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset';
+    String url = '${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset';
     JsonByPath jbp = JsonByPath();
     do {
       await Future.delayed(const Duration(seconds:1));
       final response = await http.get(Uri.parse(url), headers: {'Content-Type': 'utf-8'});
       if (response.statusCode == 200) {
         var json = jsonDecode(utf8.decode(response.bodyBytes));
-        var results = jbp.getValue(json, srv.resultsKey);   // TODO maybe put these on mapper? Mapper is the one that transforms to Results
+        var results = mppr.mapResultArray(json);
         for (var r in results) {
-          Map<String, dynamic> mappedObj = {};
-          var itemId = jbp.getValue(r, mppr.idJsonPath);
-          for (FieldMapping mppng in mppr.mappings) {
-            var value = jbp.getValue(r, mppng.from);
-            jbp.setValue(mappedObj, mppng.to, value);
-          }
+          String itemId = mppr.mapId(r);
+          Map<String, dynamic> mappedObj = mppr.mapObject(r);
           Result? existingResult = await DbHive().get<Result>(itemId, boxModifier: w.id);
           if (existingResult == null) {
             // Result is completely new
@@ -179,11 +202,11 @@ class ApiHelper {
             }
           }
         }
-        totalValue = jbp.getValue<int>(json, srv.totalKey)!;
-        currOffset += srv.offsetPerPage;   //TODO offsetperpage should be jsnonpath to "limit"
+        totalValue = jbp.getValue<int>(json, mppr.totalJsonPath)!;
+        currOffset += jbp.getValue<int>(json, mppr.limitPerPageJsonPath)!;
         // ignore: use_build_context_synchronously
-        Provider.of<AppState>(context, listen: false).appendLog('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset');
-        print('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetKey}=$currOffset');
+        Provider.of<AppState>(context, listen: false).appendLog('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset');
+        print('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset');
       } else {
         throw Exception('Failed to load request');
       }

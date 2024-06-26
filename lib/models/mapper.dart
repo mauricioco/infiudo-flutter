@@ -11,6 +11,14 @@ class Mapper extends Model {
   static final JsonByPath jbp = JsonByPath();
 
   String description;
+
+  // jsonarray properties
+  String resultListJsonPath;
+  String offsetJsonPath;
+  String limitPerPageJsonPath;
+  String totalJsonPath;
+  
+  // universal properties
   String idJsonPath;
 
   List<FieldMapping> mappings;
@@ -19,10 +27,18 @@ class Mapper extends Model {
   Mapper({
     super.id,
     required this.description,
+    required this.resultListJsonPath,
+    required this.offsetJsonPath,
+    required this.limitPerPageJsonPath,
+    required this.totalJsonPath,
     required this.idJsonPath,
     required this.mappings,
     required this.compareMappings,
   });
+
+  dynamic mapResultArray(Map<String, dynamic> json) {
+    return jbp.getValue(json, resultListJsonPath);
+  }
 
   String mapId(Map<String, dynamic> jsonObj) {
     return jbp.getValue(jsonObj, idJsonPath);

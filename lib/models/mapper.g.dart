@@ -8,6 +8,10 @@ part of 'mapper.dart';
 
 Mapper _$MapperFromJson(Map json) => Mapper(
       description: json['description'] as String,
+      resultListJsonPath: json['resultListJsonPath'] as String,
+      offsetJsonPath: json['offsetJsonPath'] as String,
+      limitPerPageJsonPath: json['limitPerPageJsonPath'] as String,
+      totalJsonPath: json['totalJsonPath'] as String,
       idJsonPath: json['idJsonPath'] as String,
       mappings: (json['mappings'] as List<dynamic>)
           .map((e) => FieldMapping.fromJson(e as Map))
@@ -20,7 +24,11 @@ Mapper _$MapperFromJson(Map json) => Mapper(
 
 Map<String, dynamic> _$MapperToJson(Mapper instance) => <String, dynamic>{
       'description': instance.description,
+      'offsetJsonPath':instance.offsetJsonPath,
+      'limitPerPageJsonPath': instance.limitPerPageJsonPath,
+      'totalJsonPath': instance.totalJsonPath,
       'idJsonPath': instance.idJsonPath,
+      'resultListJsonPath': instance.resultListJsonPath,
       'mappings': instance.mappings.map((e) => e.toJson()).toList(),
       'compareMappings': instance.compareMappings.map((e) => e.toJson()).toList()
     };
