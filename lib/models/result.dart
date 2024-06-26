@@ -25,7 +25,7 @@ class Result extends Model {
   });
   
   // TODO this only works for single field comparison
-  Result updateDataValue(String key, dynamic value) {
+  Result updateSingleDataValue(String key, dynamic value) {
     if (currentData.data[key] != value) {
       snapshots.add(ResultData(timestamp: currentData.timestamp, data: {key: currentData.data[key]}));
       currentData.updateValue(key, value);

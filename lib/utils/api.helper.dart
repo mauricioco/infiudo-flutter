@@ -10,6 +10,7 @@ import 'package:infiudo/models/model.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
+import 'package:infiudo/utils/preset.helper.dart';
 import 'package:json_by_path/json_by_path.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,6 +57,13 @@ class ApiHelper {
   }
 
   // TODO check for null items from dbhive
+  Future<Watch> getWatchForResult(Result r) async {
+    Watch? w = _watchCache[r.watchId];
+    w ??= await _getCached<Watch>(r.watchId);
+    return w!;
+  }
+
+  // TODO check for null items from dbhive
   Future<UIMapper> getUIMapperForResult(Result r) async {
     Watch? w = _watchCache[r.watchId];
     w ??= await _getCached<Watch>(r.watchId);
@@ -71,6 +79,10 @@ class ApiHelper {
     Service? s = _serviceCache[w?.serviceId];
     UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
     return um!;
+  }
+
+  Watch? getCachedWatchForResult(Result r) {
+    return _watchCache[r.watchId];
   }
 
   Future<List<Result>> getAllResults() async {
@@ -102,6 +114,7 @@ class ApiHelper {
           return element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0;
       }, boxModifier: w.id));
     }
+    // Favorites last
     currentResults.sort((a, b) {
       if (b.favorite) return -1;
       if (a.favorite) return 1;
@@ -117,6 +130,17 @@ class ApiHelper {
     for (Watch w in allWatches) {
       // ignore: use_build_context_synchronously
       newResults.addAll(await watch(w, now, context));
+      w.lastWatch = now;
+      await DbHive().save(w);
+      _watchCache[w.id!] = w;
+    }
+    // Temporary fix to keep favorites from previous version
+    List<String> favoriteIds = await PresetHelper().getSavedFavorites();
+    for (Result r in newResults) {
+      if (favoriteIds.contains(r.id)) {
+        r.favorite = true;
+        await DbHive().save(r, boxModifier: r.watchId);
+      }
     }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_watch_date', now.millisecondsSinceEpoch);
@@ -136,7 +160,7 @@ class ApiHelper {
       final response = await http.get(Uri.parse(url), headers: {'Content-Type': 'utf-8'});
       if (response.statusCode == 200) {
         var json = jsonDecode(utf8.decode(response.bodyBytes));
-        var results = jbp.getValue(json, srv.resultsKey);
+        var results = jbp.getValue(json, srv.resultsKey);   // TODO maybe put these on mapper? Mapper is the one that transforms to Results
         for (var r in results) {
           Map<String, dynamic> mappedObj = {};
           var itemId = jbp.getValue(r, mppr.idJsonPath);
@@ -150,29 +174,7 @@ class ApiHelper {
             newResults.add(Result(id: itemId, watchId: w.id!, favorite: false, currentData: ResultData(timestamp: watchDate, data: mappedObj)));
           } else {
             // Result already exists - check if it has been updated
-            bool hasChanged = false;
-
-            // TODO put this logic inside Mapper
-            for (CompareMapping c in mppr.compareMappings) {
-              switch(c.operator) {
-                case OperatorType.lt:
-                  if (mappedObj[c.field] < existingResult.currentData.data[c.field]) {
-                    existingResult.updateDataValue(c.field, mappedObj[c.field]);
-                    hasChanged = true;
-                  }
-                  break;
-                case OperatorType.gt:
-                  if (mappedObj[c.field] > existingResult.currentData.data[c.field]) {
-                    existingResult.updateDataValue(c.field, mappedObj[c.field]);
-                    hasChanged = true;
-                  }
-                  break;
-                default:
-                  break;
-              }
-            }
-
-            if (hasChanged) {
+            if (mppr.compareUpdatingSingleData(mappedObj, existingResult)) {
               newResults.add(existingResult);
             }
           }

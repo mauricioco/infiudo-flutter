@@ -24,25 +24,25 @@ class UIMapper extends Model {
   });
 
   String getThumbnailFromResult(Result r) {
-    return _getFieldFromResult(r, leadingThumbnailUrl, false);
+    return _getFieldFromResult(r, leadingThumbnailUrl, null);
   }
 
   String getTitleFromResult(Result r) {
-    return _getFieldFromResult(r, title, false);
+    return _getFieldFromResult(r, title, null);
   }
 
-  String getSubtitleFromResult(Result r) {
-    return _getFieldFromResult(r, subtitle, true);
+  String getSubtitleFromResult(Result r, DateTime? timestamp) {
+    return _getFieldFromResult(r, subtitle, timestamp);
   }
   
   String getUrlFromResult(Result r) {
-    return _getFieldFromResult(r, url, false);
+    return _getFieldFromResult(r, url, null);
   }
 
   // TODO null check
-  String _getFieldFromResult(Result r, String field, bool checkHistory) {
+  String _getFieldFromResult(Result r, String field, DateTime? timestamp) {
     String text = r.currentData.data[field].toString();
-    if (checkHistory && r.snapshots.isNotEmpty) {
+    if (timestamp != null && r.currentData.timestamp.isAfter(timestamp) && r.snapshots.isNotEmpty) {
       text = '${r.snapshots.last.data[field].toString()} -> $text';
     }
     return text;

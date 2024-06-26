@@ -4,6 +4,7 @@ import 'package:infiudo/app_state.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/ui_mapper.dart';
+import 'package:infiudo/models/watch.dart';
 import 'package:infiudo/utils/api.helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,9 +12,11 @@ import 'package:url_launcher/url_launcher.dart';
 class ResultListItem extends StatefulWidget {
   
   final Result result;
+  final Watch watch;
   final UIMapper uiMapper;
   
-  const ResultListItem.fromResult(this.result, this.uiMapper, {super.key});
+  // TODO check if Watch could be the timestamp only
+  const ResultListItem.fromResult(this.result, this.watch, this.uiMapper, {super.key});
 
   String getId() {
     return result.id!;
@@ -28,7 +31,7 @@ class ResultListItem extends StatefulWidget {
   }
 
   String getSubtitle() {
-    return uiMapper.getSubtitleFromResult(result);
+    return uiMapper.getSubtitleFromResult(result, watch.lastWatch);
     /*
     var subtitle = result.data[uiMapper.subtitle];
     var subtitleOld = result.data[uiMapper.subtitleOld];
@@ -159,7 +162,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
               
               itemCount: newResults.length,
               itemBuilder: (BuildContext context, int index) {
-                return ResultListItem.fromResult(newResults[index], ApiHelper().getCachedUIMapperForResult(newResults[index])!, key: ObjectKey(newResults[index]));
+                return ResultListItem.fromResult(newResults[index], ApiHelper().getCachedWatchForResult(newResults[index])!, ApiHelper().getCachedUIMapperForResult(newResults[index])!, key: ObjectKey(newResults[index]));
               },
               separatorBuilder: (context, index) {
                 return const Divider(height: 1);
