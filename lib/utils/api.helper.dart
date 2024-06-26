@@ -73,6 +73,24 @@ class ApiHelper {
     return um!;
   }
 
+  Future<List<Result>> getAllResults() async {
+    List<Watch> allWatches = await DbHive().getAll<Watch>();
+    List<Result> results = <Result>[];
+    for (Watch w in allWatches) {
+      results.addAll(await DbHive().getAll<Result>(boxModifier: w.id));
+    }
+    return results;
+  }
+
+  Future<List<Result>> deleteAllResults() async {
+    List<Watch> allWatches = await DbHive().getAll<Watch>();
+    List<Result> results = <Result>[];
+    for (Watch w in allWatches) {
+      await DbHive().deleteAll<Result>(boxModifier: w.id);
+    }
+    return results;
+  }
+
   Future<List<Result>> getAllCurrentResults() async {
     List<Watch> allWatches = await DbHive().getAll<Watch>();
     List<Result> currentResults = <Result>[];
@@ -81,7 +99,7 @@ class ApiHelper {
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
     for (Watch w in allWatches) {
       currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
-          return element.favorite || (element.lastModified == null ? false : element.lastModified!.compareTo(lastWatchDate) >= 0);
+          return element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0;
       }, boxModifier: w.id));
     }
     currentResults.sort((a, b) {
@@ -128,31 +146,25 @@ class ApiHelper {
           }
           Result? existingResult = await DbHive().get<Result>(itemId, boxModifier: w.id);
           if (existingResult == null) {
-            newResults.add(Result(id: itemId, watchId: w.id!, favorite: false, lastModified: watchDate, data: mappedObj));
+            // Result is completely new
+            newResults.add(Result(id: itemId, watchId: w.id!, favorite: false, currentData: ResultData(timestamp: watchDate, data: mappedObj)));
           } else {
+            // Result already exists - check if it has been updated
             bool hasChanged = false;
+
+            // TODO put this logic inside Mapper
             for (CompareMapping c in mppr.compareMappings) {
               switch(c.operator) {
                 case OperatorType.lt:
-                  if (mappedObj[c.field] < existingResult.data[c.field]) {
+                  if (mappedObj[c.field] < existingResult.currentData.data[c.field]) {
+                    existingResult.updateDataValue(c.field, mappedObj[c.field]);
                     hasChanged = true;
-                    existingResult.data[c.oldField] = existingResult.data[c.field];
-                    existingResult.data[c.field] = mappedObj[c.field];
-                  } else {
-                    if (existingResult.data[c.field] != existingResult.data[c.oldField]) {
-                      existingResult.data[c.oldField] = existingResult.data[c.field];
-                    }
                   }
                   break;
                 case OperatorType.gt:
-                  if (mappedObj[c.field] > existingResult.data[c.field]) {
+                  if (mappedObj[c.field] > existingResult.currentData.data[c.field]) {
+                    existingResult.updateDataValue(c.field, mappedObj[c.field]);
                     hasChanged = true;
-                    existingResult.data[c.oldField] = existingResult.data[c.field];
-                    existingResult.data[c.field] = mappedObj[c.field];
-                  } else {
-                    if (existingResult.data[c.field] != existingResult.data[c.oldField]) {
-                      existingResult.data[c.oldField] = existingResult.data[c.field];
-                    }
                   }
                   break;
                 default:
@@ -161,7 +173,6 @@ class ApiHelper {
             }
 
             if (hasChanged) {
-              existingResult.lastModified = watchDate;
               newResults.add(existingResult);
             }
           }

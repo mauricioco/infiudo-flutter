@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppState extends ChangeNotifier {
   static const int maxLines = 5;
   
-  List<String> _log = <String>[];
+  final List<String> _log = <String>[];
   bool _isWatching = false;
 
   AppState();

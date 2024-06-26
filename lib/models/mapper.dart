@@ -49,12 +49,10 @@ enum OperatorType {lt, gt}
 @JsonSerializable(anyMap: true)
 class CompareMapping {
   String field;
-  String oldField;
   OperatorType operator;
 
   CompareMapping({
     required this.field,
-    required this.oldField,
     required this.operator
   });
 

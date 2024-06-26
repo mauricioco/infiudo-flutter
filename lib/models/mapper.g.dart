@@ -41,13 +41,11 @@ Map<String, dynamic> _$FieldMappingToJson(FieldMapping instance) => <String, dyn
 
 CompareMapping _$CompareMappingFromJson(Map json) => CompareMapping(
       field: json['field'] as String,
-      oldField: json['oldField'] as String,
       operator: $enumDecode(_$OperatorTypeEnumMap, json['operator']),
     );
 
 Map<String, dynamic> _$CompareMappingToJson(CompareMapping instance) => <String, dynamic>{
       'field': instance.field,
-      'oldField': instance.oldField,
       'operator': _$OperatorTypeEnumMap[instance.operator]!,
     };
 

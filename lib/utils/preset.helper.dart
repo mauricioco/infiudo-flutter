@@ -5,6 +5,8 @@ import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
+import 'package:infiudo/utils/api.helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PresetHelper {
   
@@ -14,6 +16,16 @@ class PresetHelper {
 
   factory PresetHelper() {
     return _presetHelper;
+  }
+
+  Future deleteAllOldResults() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final bool? deletedAllResults = prefs.getBool('deleted_all_results');
+
+    if (deletedAllResults != null && !deletedAllResults) {
+      await ApiHelper().deleteAllResults();
+      await prefs.setBool('deleted_all_results', true);
+    }
   }
 
   Future createDefaultService() async {

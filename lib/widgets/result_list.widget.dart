@@ -20,14 +20,16 @@ class ResultListItem extends StatefulWidget {
   }
 
   String getThumbnailUrl() {
-    return result.data[uiMapper.leadingThumbnailUrl];
+    return uiMapper.getThumbnailFromResult(result);
   }
 
   String getTitle() {
-    return result.data[uiMapper.title];
+    return uiMapper.getTitleFromResult(result);
   }
 
   String getSubtitle() {
+    return uiMapper.getSubtitleFromResult(result);
+    /*
     var subtitle = result.data[uiMapper.subtitle];
     var subtitleOld = result.data[uiMapper.subtitleOld];
     if (subtitleOld != null) {
@@ -39,10 +41,11 @@ class ResultListItem extends StatefulWidget {
     } else {
       return subtitle.toString();
     }
+    */
   }
 
   String getUrl() {
-    return result.data[uiMapper.url];
+    return uiMapper.getUrlFromResult(result);
   }
 
   @override
@@ -130,15 +133,11 @@ class ResultListWidgetState extends State<ResultListWidget> {
       Provider.of<AppState>(context, listen: false).isWatching = true;
     });
 
-    List<Result> newIn = await ApiHelper().watchAll(context);
-    // Filter repeating results
-    Map<String, Result> newUniqueResults = {};
-    for(Result r in newIn) { newUniqueResults[r.id!] = r; }
-    newIn = newUniqueResults.values.toList();
+    await ApiHelper().watchAll(context);
+    List<Result> currentResults = await ApiHelper().getAllCurrentResults();
 
     setState(() {
-      newResults.removeWhere((e) => !e.favorite);
-      newResults = [...newIn, ...newResults];
+      newResults = currentResults;
       Provider.of<AppState>(context, listen: false).isWatching = false;
     });
   }

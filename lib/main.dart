@@ -10,6 +10,7 @@ void main() async {
   await Hive.initFlutter();
   await ApiHelper().updateCache();
   await PresetHelper().createDefaultService();
+  await PresetHelper().deleteAllOldResults();
   //runApp(const MyApp());
   runApp(ChangeNotifierProvider(
     create: (context) => AppState(),
