@@ -10,8 +10,13 @@ abstract class Model {
 
   @JsonKey(includeFromJson: true, includeToJson: false)
   String? id;
+  
+  bool? deleted;
 
-  Model({this.id});
+  Model({
+    this.id, 
+    this.deleted = false
+  });
 
   static T fromJson<T extends Model>(String objId, Map<dynamic, dynamic> json) {
     T obj;
