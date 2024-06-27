@@ -132,7 +132,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
   Future<void> _handleRefresh() async {
     
     setState(() {
-      Provider.of<AppState>(context, listen: false).isWatching = true;
+      Provider.of<AppState>(context, listen: false).isLoading = true;
     });
 
     await ApiHelper().watchAll(context);
@@ -140,7 +140,7 @@ class ResultListWidgetState extends State<ResultListWidget> {
 
     setState(() {
       newResults = currentResults;
-      Provider.of<AppState>(context, listen: false).isWatching = false;
+      Provider.of<AppState>(context, listen: false).isLoading = false;
     });
   }
 

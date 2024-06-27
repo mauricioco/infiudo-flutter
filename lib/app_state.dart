@@ -4,7 +4,7 @@ class AppState extends ChangeNotifier {
   static const int maxLines = 5;
   
   final List<String> _log = <String>[];
-  bool _isWatching = false;
+  bool _isLoading = false;
 
   AppState();
 
@@ -16,12 +16,12 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  bool get isWatching {
-    return _isWatching;
+  bool get isLoading {
+    return _isLoading;
   }
 
-  set isWatching(bool isWatching) {
-    _isWatching = isWatching;
+  set isLoading(bool isLoading) {
+    _isLoading = isLoading;
     notifyListeners();
   }
 

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:infiudo/app_state.dart';
+import 'package:infiudo/widgets/global_loading.widget.dart';
+import 'package:infiudo/widgets/logging.widget.dart';
 import 'package:infiudo/widgets/new_watch.widget.dart';
 import 'package:infiudo/widgets/result_list.widget.dart';
 //import 'package:infiudo/widgets/service_list.widget.dart';
@@ -28,7 +30,9 @@ class _HomeWidgetState extends State<HomeWidget> {
     super.initState();
     Future.delayed(Duration.zero, () {
       Timer.periodic(const Duration(seconds: 5), (timer) {
-        Provider.of<AppState>(context, listen: false).removeFirstLine();
+        if (!Provider.of<AppState>(context, listen: false).isLoading) {
+          Provider.of<AppState>(context, listen: false).removeFirstLine();
+        }
       });
     });
   }
@@ -72,17 +76,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                     ]
                   )
                 ),
-                Consumer<AppState>(
-                  builder: (context, appState, child) {
-                    if (appState.isWatching) {
-                      return const Opacity(
-                        opacity: 0.5,
-                        child: ModalBarrier(dismissible: false, color: Colors.black)
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                )
+                const GlobalLoadingWidget()
               ]
             ),
             bottomNavigationBar: BottomNavigationBar(
@@ -112,38 +106,8 @@ class _HomeWidgetState extends State<HomeWidget> {
               child: const Icon(Icons.add),
             ) : null,
           ),
-          Consumer<AppState>(
-            builder: (context, appState, child) {
-              if (appState.isWatching) {
-                return const Opacity(
-                  opacity: 0.5,
-                  child: ModalBarrier(dismissible: false, color: Colors.black)
-                );
-              }
-              return const SizedBox.shrink();
-            }
-          ),
-          IgnorePointer(
-            ignoring: true,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 256, minHeight: 0),
-              child:
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.5),
-                  ),
-                  child:
-                    Consumer<AppState>(
-                      builder: (context, appState, child) {
-                        return DefaultTextStyle(
-                            style: const TextStyle(fontSize: 14),
-                            child: Text(appState.displayLog)
-                        );
-                      },
-                    )
-                )
-            )
-          ),
+          const GlobalLoadingWidget(),
+          const LoggingWidget()
         ]
       )
     );
