@@ -130,9 +130,9 @@ class ApiHelper {
     final int? lastWatchDateMillis = prefs.getInt('last_watch_date');
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
     for (Watch w in _watchCache.values) {
-      currentResults.addAll(await DbHive().getWhere<Result>((K, element) {
-          return element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0;
-      }, boxModifier: w.id));
+      if (w.lastWatch != null) {
+        currentResults.addAll(await DbHive().getWhere<Result>((K, element) => element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0, boxModifier: w.id));
+      }
     }
     // Favorites last
     currentResults.sort((a, b) {
