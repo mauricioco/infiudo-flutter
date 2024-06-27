@@ -16,7 +16,6 @@ Service _$ServiceFromJson(Map json) => Service(
       defaultMapperId: json['defaultMapperId'] as String,
       defaultUIMapperId: json['defaultUIMapperId'] as String
     )
-      ..id = json['id'] as String?
       ..thumbnailUrl = json['thumbnailUrl'] as String?;
 
 Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{

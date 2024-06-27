@@ -12,9 +12,8 @@ UIMapper _$UIMapperFromJson(Map json) => UIMapper(
       title: json['title'] as String,
       subtitle: json['subtitle'] as String,
       url: json['url'] as String,
-    )
-      ..id = json['id'] as String?;
-
+    );
+    
 Map<String, dynamic> _$UIMapperToJson(UIMapper instance) => <String, dynamic>{
       'description': instance.description,
       'leadingThumbnailUrl': instance.leadingThumbnailUrl,

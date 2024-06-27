@@ -13,9 +13,8 @@ Result _$ResultFromJson(Map json) => Result(
       snapshots: (json['snapshots'] as List<dynamic>)
           .map((e) => ResultData.fromJson(e as Map))
           .toList()
-    )
-      ..id = json['id'] as String?;
-
+    );
+    
 Map<String, dynamic> _$ResultToJson(Result instance) => <String, dynamic>{
       'watchId': instance.watchId,
       'favorite': instance.favorite,

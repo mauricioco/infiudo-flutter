@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
+import 'package:infiudo/models/model.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
@@ -70,17 +71,17 @@ class PresetHelper {
     List presetServices = jsonDecode(presetServicesString);
 
     for (Map uiMapperJson in presetUIMappers) {
-      UIMapper uiMapper = UIMapper.fromJson(uiMapperJson);
+      UIMapper uiMapper = Model.fromJson<UIMapper>(uiMapperJson['id'], uiMapperJson);
       await DbHive().save(uiMapper);
     }
 
     for (Map mapperJson in presetMappers) {
-      Mapper mapper = Mapper.fromJson(mapperJson);
+      Mapper mapper = Model.fromJson<Mapper>(mapperJson['id'], mapperJson);
       await DbHive().save(mapper);
     }
 
     for (Map serviceJson in presetServices) {
-      Service service = Service.fromJson(serviceJson);
+      Service service = Model.fromJson<Service>(serviceJson['id'], serviceJson);
       await DbHive().save(service);
     }
 

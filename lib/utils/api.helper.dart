@@ -68,10 +68,8 @@ class ApiHelper {
     return List.from(_watchCache.values);
   }
 
-  Future<Watch> deleteWatch(Watch w) async {
-    await DbHive().delete<Watch>(w.id!);
-    _watchCache.remove(w.id!);
-    return w;
+  Future<Watch> deleteLogicalWatch(Watch w) async {
+    return _watchCache[w.id!] = await DbHive().deleteLogical(w);
   }
 
   // TODO check for null items from dbhive
@@ -155,6 +153,9 @@ class ApiHelper {
     List<Result> newResults = <Result>[];
     DateTime now = DateTime.now();
     for (Watch w in _watchCache.values) {
+      if (w.deleted!) {
+        continue;
+      }
       // ignore: use_build_context_synchronously
       newResults.addAll(await watch(w, now, context));
       w.lastWatch = now;

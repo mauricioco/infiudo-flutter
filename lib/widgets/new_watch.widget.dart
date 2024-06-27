@@ -39,7 +39,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registration Page'),
+        title: const Text('New Watch'),
       ),
       //for the form to be in center
       body: Center(
