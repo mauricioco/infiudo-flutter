@@ -19,8 +19,7 @@ Mapper _$MapperFromJson(Map json) => Mapper(
       compareMappings: (json['compareMappings'] as List<dynamic>)
           .map((e) => CompareMapping.fromJson(e as Map))
           .toList(),
-    )
-      ..id = json['id'] as String?;
+    );
 
 Map<String, dynamic> _$MapperToJson(Mapper instance) => <String, dynamic>{
       'description': instance.description,

@@ -35,10 +35,11 @@ abstract class Model {
         throw UnimplementedError();
     }
     obj.id = objId;
+    obj.deleted = json['deleted'];
     return obj;
   }
 
-  Map<dynamic, dynamic> toJson();
+  Map<dynamic, dynamic> toJson() => {'deleted': deleted};
 
   void generateIdIfNull() {
     id ??= ObjectId().toString();

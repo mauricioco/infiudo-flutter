@@ -71,7 +71,6 @@ class DbHive {
     T? item;
     if (boxItem != null) {
       item = Model.fromJson(id, boxItem);
-      item.id = id;
     }
     //await box.close();
     return item;
@@ -85,7 +84,6 @@ class DbHive {
     boxMap.forEach((key, value) {
       final T item = Model.fromJson<T>(key, value);
       if(where(key, item)) {
-        item.id = key;
         items.add(item);
       }
     });
@@ -99,7 +97,6 @@ class DbHive {
     List<T> items = [];
     box.toMap().forEach((key, value) {
       final T item = Model.fromJson<T>(key, value);
-      item.id = key;
       items.add(item);
     });
     //await box.close();
@@ -128,7 +125,25 @@ class DbHive {
     return items;
   }
 
-  Future<T?> delete<T extends Model>(String itemId, {String? boxModifier}) async {
+  Future<T> deleteLogical<T extends Model>(T item) async {
+    item.deleted = true;
+    await save(item);
+    return item;
+  }
+
+  Future<T?> delete<T extends Model>(T item, {String? boxModifier}) async {
+    if (item.id == null) {
+      return null;
+    }
+    String boxName = getBoxName<T>();
+    var box = await _openBox(boxName, boxModifier: boxModifier);
+    await box.delete(item.id);
+    await box.close();
+    return item;
+  }
+
+  Future<T?> deleteWithId<T extends Model>(String itemId, {String? boxModifier}) async {
+    // TODO should check if it exists before
     String boxName = getBoxName<T>();
     var box = await _openBox(boxName, boxModifier: boxModifier);
     await box.delete(itemId);

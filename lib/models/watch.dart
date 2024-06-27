@@ -28,6 +28,6 @@ class Watch extends Model {
   factory Watch.fromJson(Map<dynamic, dynamic> json) => _$WatchFromJson(json);
 
   @override
-  Map<dynamic, dynamic> toJson() => _$WatchToJson(this);
+  Map<dynamic, dynamic> toJson() => {...super.toJson(), ..._$WatchToJson(this)};
 
 }
