@@ -1,9 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-
-import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/watch.dart';
+import 'package:infiudo/utils/api.helper.dart';
 
 class WatchListItem extends StatelessWidget {
 
@@ -51,13 +50,13 @@ class WatchListWidgetState extends State<WatchListWidget> {
   }
 
   Future<void> _handleRefresh() async {
-    List<Watch> newWatches = await DbHive().getAll<Watch>();
+    List<Watch> newWatches = ApiHelper().getCachedWatches().where((w) => !w.deleted!).toList();
     
     // TODO: find a way to get items with fks included
     Map<String, Service> newServiceMap = <String, Service>{};
     for (Watch w in newWatches) {
-      Service? s = await DbHive().get<Service>(w.serviceId);
-      newServiceMap[s!.id!] = s;
+      Service s = ApiHelper().getCachedService(w.serviceId)!;
+      newServiceMap[s.id!] = s;
     }
     setState(() {
       watches = newWatches;
@@ -66,7 +65,7 @@ class WatchListWidgetState extends State<WatchListWidget> {
   }
 
   void _deleteWatch(Watch item) async {
-    await DbHive().delete<Watch>(item.id!);
+    await ApiHelper().deleteLogicalWatch(item);
     watches.remove(item);
     setState(() {});
   }
@@ -75,8 +74,8 @@ class WatchListWidgetState extends State<WatchListWidget> {
   Widget build(BuildContext context) {
     return ListView.separated(
       itemCount: watches.length,
-      itemBuilder: (BuildContext context, int index) {
-        return WatchListItem.fromWatch(watches[index], serviceMap[watches[index].serviceId]!.thumbnailUrl!, key: ObjectKey(watches[index]), onDeleteClicked: () => {_deleteWatch(watches[index])});
+      itemBuilder: (BuildContext context, int i) {
+        return WatchListItem.fromWatch(watches[i], ApiHelper().getCachedService(watches[i].serviceId)!.thumbnailUrl!, key: ObjectKey(watches[i]), onDeleteClicked: () => {_deleteWatch(watches[i])});
       },
       separatorBuilder: (context, index) {
         return const Divider(height: 1);

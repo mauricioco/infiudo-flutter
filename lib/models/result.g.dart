@@ -9,14 +9,25 @@ part of 'result.dart';
 Result _$ResultFromJson(Map json) => Result(
       watchId: json['watchId'] as String,
       favorite: json['favorite'] as bool,
-      data: json['data'] as Map,
-    )
-      ..id = json['id'] as String?
-      ..lastModified = json['lastModified'] as DateTime?;
-
+      currentData: ResultData.fromJson(json['currentData']),
+      snapshots: (json['snapshots'] as List<dynamic>)
+          .map((e) => ResultData.fromJson(e as Map))
+          .toList()
+    );
+    
 Map<String, dynamic> _$ResultToJson(Result instance) => <String, dynamic>{
       'watchId': instance.watchId,
       'favorite': instance.favorite,
-      'lastModified': instance.lastModified,
+      'currentData': instance.currentData.toJson(),
+      'snapshots': instance.snapshots.map((e) => e.toJson()).toList(),
+    };
+
+ResultData _$ResultDataFromJson(Map json) => ResultData(
+      timestamp: json['timestamp'] as DateTime,
+      data: json['data'] as Map,
+    );
+
+Map<String, dynamic> _$ResultDataToJson(ResultData instance) => <String, dynamic>{
+      'timestamp': instance.timestamp,
       'data': instance.data,
     };

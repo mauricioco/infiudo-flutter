@@ -10,6 +10,8 @@ class Watch extends Model {
   String serviceId;
 
   String query;
+
+  DateTime? lastWatch;
   
   String? mapperId;
   String? postMapperId;
@@ -18,6 +20,7 @@ class Watch extends Model {
     super.id,
     required this.serviceId,
     required this.query,
+    this.lastWatch,
     this.mapperId,
     this.postMapperId
   });
@@ -25,6 +28,6 @@ class Watch extends Model {
   factory Watch.fromJson(Map<dynamic, dynamic> json) => _$WatchFromJson(json);
 
   @override
-  Map<dynamic, dynamic> toJson() => _$WatchToJson(this);
+  Map<dynamic, dynamic> toJson() => {...super.toJson(), ..._$WatchToJson(this)};
 
 }

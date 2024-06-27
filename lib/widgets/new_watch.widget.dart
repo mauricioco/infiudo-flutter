@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/watch.dart';
 import 'package:infiudo/utils/api.helper.dart';
@@ -25,7 +24,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
   }
 
   Future<void> _initState() async {
-    services = await DbHive().getAll<Service>();
+    services = ApiHelper().getCachedServices();
     if (services.isNotEmpty) {
       selectedService = services[0];
     }
@@ -40,7 +39,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registration Page'),
+        title: const Text('New Watch'),
       ),
       //for the form to be in center
       body: Center(
@@ -85,8 +84,8 @@ class _NewWatchWidget extends State<NewWatchWidget> {
                 onPressed: _isLoading ? null : () async {
                   setState(() => _isLoading = true);
                   Watch w = Watch(serviceId: selectedService!.id!, query: Uri.encodeComponent(nameController.text));
-                  DbHive().save<Watch>(w).whenComplete(() => finishSaving(context, w));
-                  // TODO LOADING
+                  ApiHelper().saveNewWatch(w).whenComplete(() => finishSaving(context, w));
+                  // TODO IMPROVE LOADING
                 },
                 child: _isLoading
                   ? Container(

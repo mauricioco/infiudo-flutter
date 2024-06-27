@@ -8,8 +8,10 @@ import 'package:provider/provider.dart';
 
 void main() async {
   await Hive.initFlutter();
-  await ApiHelper().updateCache();
   await PresetHelper().createDefaultService();
+  await PresetHelper().saveFavorites();
+  await PresetHelper().deleteAllOldResults();
+  await ApiHelper().updateCache();
   //runApp(const MyApp());
   runApp(ChangeNotifierProvider(
     create: (context) => AppState(),

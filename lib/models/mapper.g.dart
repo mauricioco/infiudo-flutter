@@ -8,6 +8,10 @@ part of 'mapper.dart';
 
 Mapper _$MapperFromJson(Map json) => Mapper(
       description: json['description'] as String,
+      resultListJsonPath: json['resultListJsonPath'] as String,
+      offsetJsonPath: json['offsetJsonPath'] as String,
+      limitPerPageJsonPath: json['limitPerPageJsonPath'] as String,
+      totalJsonPath: json['totalJsonPath'] as String,
       idJsonPath: json['idJsonPath'] as String,
       mappings: (json['mappings'] as List<dynamic>)
           .map((e) => FieldMapping.fromJson(e as Map))
@@ -15,12 +19,15 @@ Mapper _$MapperFromJson(Map json) => Mapper(
       compareMappings: (json['compareMappings'] as List<dynamic>)
           .map((e) => CompareMapping.fromJson(e as Map))
           .toList(),
-    )
-      ..id = json['id'] as String?;
+    );
 
 Map<String, dynamic> _$MapperToJson(Mapper instance) => <String, dynamic>{
       'description': instance.description,
+      'offsetJsonPath':instance.offsetJsonPath,
+      'limitPerPageJsonPath': instance.limitPerPageJsonPath,
+      'totalJsonPath': instance.totalJsonPath,
       'idJsonPath': instance.idJsonPath,
+      'resultListJsonPath': instance.resultListJsonPath,
       'mappings': instance.mappings.map((e) => e.toJson()).toList(),
       'compareMappings': instance.compareMappings.map((e) => e.toJson()).toList()
     };
@@ -41,13 +48,11 @@ Map<String, dynamic> _$FieldMappingToJson(FieldMapping instance) => <String, dyn
 
 CompareMapping _$CompareMappingFromJson(Map json) => CompareMapping(
       field: json['field'] as String,
-      oldField: json['oldField'] as String,
       operator: $enumDecode(_$OperatorTypeEnumMap, json['operator']),
     );
 
 Map<String, dynamic> _$CompareMappingToJson(CompareMapping instance) => <String, dynamic>{
       'field': instance.field,
-      'oldField': instance.oldField,
       'operator': _$OperatorTypeEnumMap[instance.operator]!,
     };
 
