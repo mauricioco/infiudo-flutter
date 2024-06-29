@@ -11,43 +11,33 @@ import 'package:url_launcher/url_launcher.dart';
 class ResultListItem extends StatefulWidget {
   
   final Result result;
-  final DateTime lastWatch;
+  final Watch watch;
   final UIMapper? uiMapper;
   
-  // TODO check if Watch could be the timestamp only
-  const ResultListItem.fromResult(this.result, this.lastWatch, this.uiMapper, {super.key});
+  const ResultListItem.fromResult(this.result, this.watch, this.uiMapper, {super.key});
 
-  String getId() {
+  get id {
     return result.id!;
   }
 
-  String? getThumbnailUrl() {
+  get thumbnailUrl {
     return uiMapper?.getThumbnailFromResult(result);
   }
 
-  String? getTitle() {
+  get title {
     return uiMapper?.getTitleFromResult(result);
   }
 
-  String? getSubtitle() {
-    return uiMapper?.getSubtitleFromResult(result, lastWatch);
-    /*
-    var subtitle = result.data[uiMapper.subtitle];
-    var subtitleOld = result.data[uiMapper.subtitleOld];
-    if (subtitleOld != null) {
-      if (subtitleOld == subtitle) {
-        return subtitle.toString();
-      } else {
-        return '$subtitleOld -> $subtitle';
-      }
-    } else {
-      return subtitle.toString();
-    }
-    */
+  get subtitle {
+    return uiMapper?.getSubtitleFromResult(result, watch.lastWatch ?? result.currentData.timestamp);
   }
 
-  String? getUrl() {
+  get url {
     return uiMapper?.getUrlFromResult(result);
+  }
+
+  get watchQuery {
+    return Uri.decodeComponent(watch.query);
   }
 
   @override
@@ -70,10 +60,25 @@ class _ResultListItemState extends State<ResultListItem> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
-        final Uri url = Uri.parse(widget.getUrl() ?? 'about:blank');
+        final Uri url = Uri.parse(widget.url ?? 'about:blank');
         if (!await launchUrl(url)) {
           throw Exception('Could not launch $url');
         }
+      },
+      onLongPress: () {
+        showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Watch info'),
+            content: Text(widget.watchQuery),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK')),
+            ],
+          );
+        });
       },
       child: SizedBox(
         height: 128,
@@ -81,14 +86,14 @@ class _ResultListItemState extends State<ResultListItem> {
             child: ListTile(
               leading: SizedBox(
                 width: 64,
-                child: Image.network(widget.getThumbnailUrl() ?? 'http://placehold.jp/150x150.png', fit: BoxFit.contain),
+                child: Image.network(widget.thumbnailUrl ?? 'http://placehold.jp/150x150.png', fit: BoxFit.contain),
               ),
               title: Text(
-                widget.getTitle() ?? 'DELETED WATCH',
+                widget.title ?? 'DELETED WATCH',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 4,
                 ),
-              subtitle: Text(widget.getSubtitle() ?? 'DELETED WATCH'),
+              subtitle: Text(widget.subtitle ?? 'DELETED WATCH'),
               trailing: IconButton(
                       onPressed: () async {
                         await setFavorite();
@@ -160,11 +165,8 @@ class ResultListWidgetState extends State<ResultListWidget> {
             child: ListView.separated(
               itemCount: newResults.length,
               itemBuilder: (BuildContext context, int index) {
-                Watch? w = ApiHelper().getCachedWatchForResult(newResults[index]);  // This needs to return something
-                return ResultListItem.fromResult(newResults[index], 
-                  w?.lastWatch != null ? w!.lastWatch! : newResults[index].currentData.timestamp, 
-                  ApiHelper().getCachedUIMapperForResult(newResults[index]), 
-                  key: ObjectKey(newResults[index]));
+                final Watch? w = ApiHelper().getCachedWatchForResult(newResults[index]);  // This needs to return something
+                return ResultListItem.fromResult(newResults[index], w!, ApiHelper().getCachedUIMapperForResult(newResults[index]), key: ObjectKey(newResults[index]));
               },
               separatorBuilder: (context, index) {
                 return const Divider(height: 1);
