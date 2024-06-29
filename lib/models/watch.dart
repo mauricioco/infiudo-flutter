@@ -15,6 +15,8 @@ class Watch extends Model {
   
   String? mapperId;
   String? postMapperId;
+
+  String? uiMapperId;
   
   Watch({
     super.id,
@@ -22,7 +24,8 @@ class Watch extends Model {
     required this.query,
     this.lastWatch,
     this.mapperId,
-    this.postMapperId
+    this.postMapperId,
+    this.uiMapperId,
   });
 
   factory Watch.fromJson(Map<dynamic, dynamic> json) => _$WatchFromJson(json);

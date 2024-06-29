@@ -6,10 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:infiudo/app_state.dart';
 import 'package:infiudo/db/db_hive.dart';
 import 'package:infiudo/models/mapper.dart';
-import 'package:infiudo/models/model.dart';
 import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
+import 'package:infiudo/utils/cache.helper.dart';
 import 'package:infiudo/utils/preset.helper.dart';
 import 'package:json_by_path/json_by_path.dart';
 import 'package:provider/provider.dart';
@@ -23,85 +23,27 @@ class ApiHelper {
 
   ApiHelper._internal();
 
-  final Map<String, Service> _serviceCache = {};
-  final Map<String, Watch> _watchCache = {};
-  final Map<String, Mapper> _mapperCache = {};
-  final Map<String, UIMapper> _uiMapperCache = {};
-
   factory ApiHelper() {
     return _apiHelper;
   }
 
-  Future<void> updateCache() async {
-    for (var s in (await DbHive().getAll<Service>())) { _serviceCache[s.id!] = s; }
-    for (var w in (await DbHive().getAll<Watch>())) { _watchCache[w.id!] = w; }
-    for (var m in (await DbHive().getAll<Mapper>())) { _mapperCache[m.id!] = m; }
-    for (var um in (await DbHive().getAll<UIMapper>())) { _uiMapperCache[um.id!] = um; }
-  }
-
-  Future<T?> _getCached<T extends Model>(String id) async {
-    T? item = await DbHive().get<T>(id);
-    switch(T) {
-      case Service:
-        _serviceCache[id] = item as Service;
-      case Mapper:
-        _mapperCache[id] = item as Mapper;
-      case UIMapper:
-        _uiMapperCache[id] = item as UIMapper;
-      case Watch:
-        _watchCache[id] = item as Watch;
-      default:
-        throw UnimplementedError();
-    }
-    return item;
-  }
-
-  List<Service> getCachedServices() {
-    return List.from(_serviceCache.values);
-  }
-
-  Service? getCachedService(String id) {
-    return _serviceCache[id];
-  }
-
-  List<Watch> getCachedWatches() {
-    return List.from(_watchCache.values);
-  }
-
   Future<Watch> deleteLogicalWatch(Watch w) async {
-    return _watchCache[w.id!] = await DbHive().deleteLogical(w);
+    return CacheHelper().deleteCached<Watch>(await DbHive().deleteLogical(w));
   }
 
-  // TODO check for null items from dbhive
-  Future<Watch> getWatchForResult(Result r) async {
-    Watch? w = _watchCache[r.watchId];
-    w ??= await _getCached<Watch>(r.watchId);
-    return w!;
-  }
-
-  // TODO check for null items from dbhive
-  Future<UIMapper> getUIMapperForResult(Result r) async {
-    Watch? w = _watchCache[r.watchId];
-    w ??= await _getCached<Watch>(r.watchId);
-    Service? s = _serviceCache[w?.serviceId];
-    s ??= await _getCached<Service>(w!.serviceId);
-    UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
-    um ??= await _getCached<UIMapper>(s!.defaultUIMapperId);
-    return um!;
-  }
 
   UIMapper? getCachedUIMapperForResult(Result r) {
-    Watch? w = _watchCache[r.watchId];
-    if (w == null) {
-      return null;
-    }
-    Service? s = _serviceCache[w.serviceId];
-    UIMapper? um = _uiMapperCache[s?.defaultUIMapperId];
-    return um!;
+    final Watch? w = CacheHelper().getCached<Watch>(r.watchId);
+    if (w == null) return null;
+
+    final String? umid = w.uiMapperId ?? CacheHelper().getCached<Service>(w.serviceId)?.defaultUIMapperId;
+    if (umid == null) return null;
+
+    return CacheHelper().getCached<UIMapper>(umid);
   }
 
   Watch? getCachedWatchForResult(Result r) {
-    return _watchCache[r.watchId];
+    return CacheHelper().getCached<Watch>(r.watchId);
   }
 
   Future<Result> updateResult(Result r) async {
@@ -110,7 +52,7 @@ class ApiHelper {
 
   Future<List<Result>> getAllResults() async {
     List<Result> results = <Result>[];
-    for (Watch w in _watchCache.values) {
+    for (Watch w in CacheHelper().getCachedWatches()) {
       results.addAll(await DbHive().getAll<Result>(boxModifier: w.id));
     }
     return results;
@@ -118,7 +60,7 @@ class ApiHelper {
 
   Future<List<Result>> deleteAllResults() async {
     List<Result> results = <Result>[];
-    for (Watch w in _watchCache.values) {
+    for (Watch w in CacheHelper().getCachedWatches()) {
       await DbHive().deleteAll<Result>(boxModifier: w.id);
     }
     return results;
@@ -129,7 +71,7 @@ class ApiHelper {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final int? lastWatchDateMillis = prefs.getInt('last_watch_date');
     DateTime lastWatchDate = lastWatchDateMillis == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(lastWatchDateMillis);
-    for (Watch w in _watchCache.values) {
+    for (Watch w in CacheHelper().getCachedWatches()) {
       if (w.lastWatch != null) {
         currentResults.addAll(await DbHive().getWhere<Result>((K, element) => element.favorite || element.currentData.timestamp.compareTo(lastWatchDate) >= 0, boxModifier: w.id));
       }
@@ -143,24 +85,23 @@ class ApiHelper {
     return currentResults;
   }
 
-  Future<Watch> saveNewWatch(Watch w) async {
+  Future<Watch> saveWatch(Watch w) async {
     Watch newWatch = await DbHive().save(w);
-    _watchCache[newWatch.id!] = newWatch;
+    CacheHelper().updateCached(newWatch);
     return newWatch;
   }
 
   Future<List<Result>> watchAll(BuildContext context) async {
     List<Result> newResults = <Result>[];
     DateTime now = DateTime.now();
-    for (Watch w in _watchCache.values) {
+    for (Watch w in CacheHelper().getCachedWatches()) {
       if (w.deleted!) {
         continue;
       }
       // ignore: use_build_context_synchronously
       newResults.addAll(await watch(w, now, context));
       w.lastWatch = now;
-      await DbHive().save(w);
-      _watchCache[w.id!] = w;
+      await saveWatch(w);
     }
     // Temporary fix to keep favorites from previous version
     List<String> favoriteIds = await PresetHelper().getSavedFavorites();

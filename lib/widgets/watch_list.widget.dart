@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/watch.dart';
 import 'package:infiudo/utils/api.helper.dart';
+import 'package:infiudo/utils/cache.helper.dart';
 
 class WatchListItem extends StatelessWidget {
 
@@ -50,12 +51,12 @@ class WatchListWidgetState extends State<WatchListWidget> {
   }
 
   Future<void> _handleRefresh() async {
-    List<Watch> newWatches = ApiHelper().getCachedWatches().where((w) => !w.deleted!).toList();
+    List<Watch> newWatches = CacheHelper().getCachedWatches().where((w) => !w.deleted!).toList();
     
     // TODO: find a way to get items with fks included
     Map<String, Service> newServiceMap = <String, Service>{};
     for (Watch w in newWatches) {
-      Service s = ApiHelper().getCachedService(w.serviceId)!;
+      Service s = CacheHelper().getCached<Service>(w.serviceId)!;
       newServiceMap[s.id!] = s;
     }
     setState(() {
@@ -75,7 +76,7 @@ class WatchListWidgetState extends State<WatchListWidget> {
     return ListView.separated(
       itemCount: watches.length,
       itemBuilder: (BuildContext context, int i) {
-        return WatchListItem.fromWatch(watches[i], ApiHelper().getCachedService(watches[i].serviceId)!.thumbnailUrl!, key: ObjectKey(watches[i]), onDeleteClicked: () => {_deleteWatch(watches[i])});
+        return WatchListItem.fromWatch(watches[i], CacheHelper().getCached<Service>(watches[i].serviceId)!.thumbnailUrl!, key: ObjectKey(watches[i]), onDeleteClicked: () => {_deleteWatch(watches[i])});
       },
       separatorBuilder: (context, index) {
         return const Divider(height: 1);

@@ -161,7 +161,10 @@ class ResultListWidgetState extends State<ResultListWidget> {
               itemCount: newResults.length,
               itemBuilder: (BuildContext context, int index) {
                 Watch? w = ApiHelper().getCachedWatchForResult(newResults[index]);  // This needs to return something
-                return ResultListItem.fromResult(newResults[index], w?.lastWatch != null ? w!.lastWatch! : newResults[index].currentData.timestamp, ApiHelper().getCachedUIMapperForResult(newResults[index]), key: ObjectKey(newResults[index]));
+                return ResultListItem.fromResult(newResults[index], 
+                  w?.lastWatch != null ? w!.lastWatch! : newResults[index].currentData.timestamp, 
+                  ApiHelper().getCachedUIMapperForResult(newResults[index]), 
+                  key: ObjectKey(newResults[index]));
               },
               separatorBuilder: (context, index) {
                 return const Divider(height: 1);

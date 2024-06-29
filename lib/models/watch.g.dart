@@ -9,10 +9,11 @@ part of 'watch.dart';
 Watch _$WatchFromJson(Map json) => Watch(
       serviceId: json['serviceId'] as String,
       query: json['query'] as String,
+      lastWatch: json['lastWatch'] as DateTime?,
       mapperId: json['mapperId'] as String?,
       postMapperId: json['postMapperId'] as String?,
-    )
-      ..lastWatch = json['lastWatch'] as DateTime?;
+      uiMapperId: json['uiMapperId'] as String?
+    );
 
 Map<String, dynamic> _$WatchToJson(Watch instance) => <String, dynamic>{
       'serviceId': instance.serviceId,
@@ -20,4 +21,5 @@ Map<String, dynamic> _$WatchToJson(Watch instance) => <String, dynamic>{
       'lastWatch': instance.lastWatch,
       'mapperId': instance.mapperId,
       'postMapperId': instance.postMapperId,
+      'uiMapperId': instance.uiMapperId,
     };

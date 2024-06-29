@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:infiudo/app_state.dart';
-import 'package:infiudo/utils/api.helper.dart';
+import 'package:infiudo/utils/cache.helper.dart';
 import 'package:infiudo/utils/preset.helper.dart';
 import 'package:infiudo/widgets/home.widget.dart';
 import 'package:provider/provider.dart';
@@ -9,9 +9,9 @@ import 'package:provider/provider.dart';
 void main() async {
   await Hive.initFlutter();
   await PresetHelper().createDefaultService();
-  await PresetHelper().saveFavorites();
-  await PresetHelper().deleteAllOldResults();
-  await ApiHelper().updateCache();
+  //await PresetHelper().saveFavorites();
+  //await PresetHelper().deleteAllOldResults();
+  await CacheHelper().refreshCache();
   //runApp(const MyApp());
   runApp(ChangeNotifierProvider(
     create: (context) => AppState(),

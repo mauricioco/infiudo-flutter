@@ -3,6 +3,7 @@ import 'package:infiudo/app_state.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/watch.dart';
 import 'package:infiudo/utils/api.helper.dart';
+import 'package:infiudo/utils/cache.helper.dart';
 import 'package:infiudo/widgets/global_loading.widget.dart';
 import 'package:infiudo/widgets/logging.widget.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +28,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
   }
 
   Future<void> _initState() async {
-    services = ApiHelper().getCachedServices();
+    services = CacheHelper().getCachedServices();
     if (services.isNotEmpty) {
       selectedService = services[0];
     }
@@ -92,7 +93,7 @@ class _NewWatchWidget extends State<NewWatchWidget> {
                     onPressed: Provider.of<AppState>(context, listen: false).isLoading ? null : () async {
                       setState(() => Provider.of<AppState>(context, listen: false).isLoading = true);
                       Watch w = Watch(serviceId: selectedService!.id!, query: Uri.encodeComponent(nameController.text));
-                      ApiHelper().saveNewWatch(w).whenComplete(() => finishSaving(context, w));
+                      ApiHelper().saveWatch(w).whenComplete(() => finishSaving(context, w));
                       // TODO IMPROVE LOADING
                     },
                     child: Provider.of<AppState>(context, listen: false).isLoading
