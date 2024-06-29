@@ -104,13 +104,13 @@ class ApiHelper {
       await saveWatch(w);
     }
     // Temporary fix to keep favorites from previous version
-    List<String> favoriteIds = await PresetHelper().getSavedFavorites();
-    for (Result r in newResults) {
-      if (favoriteIds.contains(r.id)) {
-        r.favorite = true;
-        await DbHive().save(r, boxModifier: r.watchId);
-      }
-    }
+    // List<String> favoriteIds = await PresetHelper().getSavedFavorites();
+    // for (Result r in newResults) {
+    //   if (favoriteIds.contains(r.id)) {
+    //     r.favorite = true;
+    //     await DbHive().save(r, boxModifier: r.watchId);
+    //   }
+    // }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('last_watch_date', now.millisecondsSinceEpoch);
     return newResults;

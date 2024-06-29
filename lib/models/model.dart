@@ -35,7 +35,7 @@ abstract class Model {
         throw UnimplementedError();
     }
     obj.id = objId;
-    obj.deleted = json['deleted'];
+    obj.deleted = json['deleted'] ?? false;
     return obj;
   }
 
