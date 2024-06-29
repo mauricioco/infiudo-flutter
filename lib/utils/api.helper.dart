@@ -10,7 +10,6 @@ import 'package:infiudo/models/result.dart';
 import 'package:infiudo/models/service.dart';
 import 'package:infiudo/models/ui_mapper.dart';
 import 'package:infiudo/utils/cache.helper.dart';
-import 'package:infiudo/utils/preset.helper.dart';
 import 'package:json_by_path/json_by_path.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -98,7 +97,7 @@ class ApiHelper {
       if (w.deleted!) {
         continue;
       }
-      // ignore: use_build_context_synchronously
+
       newResults.addAll(await watch(w, now, context));
       w.lastWatch = now;
       await saveWatch(w);
@@ -126,6 +125,9 @@ class ApiHelper {
     JsonByPath jbp = JsonByPath();
     do {
       await Future.delayed(const Duration(seconds:1));
+      if (context.mounted) {
+        Provider.of<AppState>(context, listen: false).appendLog('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset');
+      }
       final response = await http.get(Uri.parse(url), headers: {'Content-Type': 'utf-8'});
       if (response.statusCode == 200) {
         var json = jsonDecode(utf8.decode(response.bodyBytes));
@@ -146,9 +148,6 @@ class ApiHelper {
         }
         totalValue = jbp.getValue<int>(json, mppr.totalJsonPath)!;
         currOffset += jbp.getValue<int>(json, mppr.limitPerPageJsonPath)!;
-        // ignore: use_build_context_synchronously
-        Provider.of<AppState>(context, listen: false).appendLog('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset');
-        print('${srv.urlBase}?${srv.queryParamKey}=${w.query}&${srv.offsetParamKey}=$currOffset');
       } else {
         throw Exception('Failed to load request');
       }
