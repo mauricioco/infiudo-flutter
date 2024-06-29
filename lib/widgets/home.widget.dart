@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:infiudo/app_state.dart';
 import 'package:infiudo/widgets/global_loading.widget.dart';
 import 'package:infiudo/widgets/logging.widget.dart';
@@ -22,12 +23,35 @@ class _HomeWidgetState extends State<HomeWidget> {
   
   int _selectedIndex = 0;
   bool _showFab = false;
+  final ScrollController _hideButtonController = ScrollController();
 
   int _countHack = 0;   // TODO: this is a hacky way to refresh the Watch List
 
   @override
   void initState() {
     super.initState();
+    _hideButtonController.addListener((){
+      if(_hideButtonController.position.userScrollDirection == ScrollDirection.reverse){
+        if(_showFab == true) {
+            /* only set when the previous state is false
+             * Less widget rebuilds 
+             */
+            setState((){
+              _showFab = false;
+            });
+        }
+      } else {
+        if(_hideButtonController.position.userScrollDirection == ScrollDirection.forward){
+          if(_showFab == false) {
+              /* only set when the previous state is false
+               * Less widget rebuilds 
+               */
+               setState((){
+                 _showFab = true;
+               });
+           }
+        }
+    }});
     Future.delayed(Duration.zero, () {
       Timer.periodic(const Duration(seconds: 5), (timer) {
         if (!Provider.of<AppState>(context, listen: false).isLoading) {
@@ -55,7 +79,6 @@ class _HomeWidgetState extends State<HomeWidget> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -67,11 +90,12 @@ class _HomeWidgetState extends State<HomeWidget> {
             body: Stack(
               children: [
                 SafeArea(
-                  child:IndexedStack(
+                  child:
+                    IndexedStack(
                     index: _selectedIndex, 
                     children:[
                       const ResultListWidget(),
-                      WatchListWidget(key: ValueKey(_countHack)),
+                      WatchListWidget(key: ValueKey(_countHack), hideButtonController: _hideButtonController),
                       //const ServiceListWidget(),
                     ]
                   )
@@ -99,6 +123,7 @@ class _HomeWidgetState extends State<HomeWidget> {
               onTap: _onItemTapped,
             ),
             floatingActionButton: _showFab ? FloatingActionButton(
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(360))),
               onPressed: () {
                 _countHack++;
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const NewWatchWidget())).then((_) => setState(() {}));
