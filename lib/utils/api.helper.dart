@@ -141,7 +141,10 @@ class ApiHelper {
             newResults.add(Result(id: itemId, watchId: w.id!, favorite: false, currentData: ResultData(timestamp: watchDate, data: mappedObj)));
           } else {
             // Result already exists - check if it has been updated
-            if (mppr.compareUpdatingSingleData(mappedObj, existingResult)) {
+            Map<String, dynamic> changedData = mppr.compareData(existingResult, mappedObj);
+            if (changedData.isNotEmpty) {
+              // Has been updated
+              existingResult.updateData(changedData);
               newResults.add(existingResult);
             }
           }

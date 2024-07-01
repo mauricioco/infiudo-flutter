@@ -24,12 +24,18 @@ class Result extends Model {
     this.snapshots = const [],
   });
   
-  // TODO this only works for single field comparison
   Result updateSingleDataValue(String key, dynamic value) {
     if (currentData.data[key] != value) {
       snapshots.add(ResultData(timestamp: currentData.timestamp, data: {key: currentData.data[key]}));
-      currentData.updateValue(key, value);
+      currentData.updateSingleDataValue(key, value);
     }
+    return this;
+  }
+
+  Result updateData(Map<String, dynamic> changedData) {
+    Map<String, dynamic> oldData = { for (String k in changedData.keys) k : currentData.data[k] };
+    snapshots.add(ResultData(timestamp: currentData.timestamp, data: oldData));
+    currentData.updateData(changedData);
     return this;
   }
 
@@ -50,8 +56,16 @@ class ResultData {
     required this.data,
   });
 
-  ResultData updateValue(String key, dynamic value) {
+  ResultData updateSingleDataValue(String key, dynamic value) {
     data[key] = value;
+    timestamp = DateTime.now();
+    return this;
+  }
+
+  ResultData updateData(Map<String, dynamic> changedData) {
+    for (String k in changedData.keys) {
+      data[k] = changedData[k];
+    }
     timestamp = DateTime.now();
     return this;
   }

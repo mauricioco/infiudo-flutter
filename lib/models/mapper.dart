@@ -53,29 +53,17 @@ class Mapper extends Model {
     return mappedObj;
   }
 
-  // TODO this only works for single field comparison
-  bool compareUpdatingSingleData(Map<String, dynamic> newData, Result r) {
+  Map<String, dynamic> compareData(Result r, Map<String, dynamic> newData) {
     //Map<String, dynamic> newData = {...data};
-    bool hasChanged = false;
+    Map<String, dynamic> changedData = <String, dynamic>{};
+    
     for (CompareMapping c in compareMappings) {
-      switch(c.operator) {
-        case OperatorType.lt:
-          if (newData[c.field] < r.currentData.data[c.field]) {
-            r.updateSingleDataValue(c.field, newData[c.field]);
-            hasChanged = true;
-          }
-          break;
-        case OperatorType.gt:
-          if (newData[c.field] > r.currentData.data[c.field]) {
-            r.updateSingleDataValue(c.field, newData[c.field]);
-            hasChanged = true;
-          }
-          break;
-        default:
-          break;
+      if (r.currentData.data[c.field] != newData[c.field]) {
+        changedData[c.field] = newData[c.field];
       }
     }
-    return hasChanged;
+
+    return changedData;
   }
 
   factory Mapper.fromJson(Map<dynamic, dynamic> json) => _$MapperFromJson(json);
@@ -108,7 +96,7 @@ enum OperatorType {lt, gt}
 @JsonSerializable(anyMap: true)
 class CompareMapping {
   String field;
-  OperatorType operator;
+  OperatorType operator;  // ignored for now
 
   CompareMapping({
     required this.field,
