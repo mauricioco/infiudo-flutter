@@ -34,7 +34,11 @@ class UIMapper extends Model {
   String getSubtitleFromResult(Result r, DateTime? timestamp) {
     return _getFieldFromResult(r, subtitle, timestamp);
   }
-  
+
+  int getSubtitleComparisonFromResult(Result r, DateTime? timestamp) {
+    return _getComparisonFromResult(r, subtitle, timestamp);
+  }
+
   String getUrlFromResult(Result r) {
     return _getFieldFromResult(r, url, null);
   }
@@ -46,6 +50,18 @@ class UIMapper extends Model {
       text = '${r.snapshots.last.data[field].toString()} -> $text';
     }
     return text;
+  }
+
+  // TODO null check
+  int _getComparisonFromResult(Result r, String field, DateTime? timestamp) {
+    if (timestamp != null && r.currentData.timestamp.isAfter(timestamp) && r.snapshots.isNotEmpty) {
+      if (r.snapshots.last.data[field] > r.currentData.data[field]) {
+        return -1;
+      } else if (r.snapshots.last.data[field] < r.currentData.data[field]) {
+        return 1;
+      }
+    }
+    return 0;
   }
 
   factory UIMapper.fromJson(Map<dynamic, dynamic> json) => _$UIMapperFromJson(json);

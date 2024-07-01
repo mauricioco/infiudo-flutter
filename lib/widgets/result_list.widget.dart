@@ -32,6 +32,17 @@ class ResultListItem extends StatefulWidget {
     return uiMapper?.getSubtitleFromResult(result, watch.lastWatch ?? result.currentData.timestamp);
   }
 
+  get subtitleStyle {
+    switch (uiMapper?.getSubtitleComparisonFromResult(result, watch.lastWatch ?? result.currentData.timestamp)) {
+      case 1:
+        return const TextStyle(color: Colors.red);
+      case -1:
+        return const TextStyle(color: Colors.green, fontWeight: FontWeight.bold);
+      default:
+        return const TextStyle();
+    }
+  }
+
   get url {
     return uiMapper?.getUrlFromResult(result);
   }
@@ -93,7 +104,9 @@ class _ResultListItemState extends State<ResultListItem> {
                 overflow: TextOverflow.ellipsis,
                 maxLines: 4,
                 ),
-              subtitle: Text(widget.subtitle ?? 'DELETED WATCH'),
+              subtitle: Text(widget.subtitle ?? 'DELETED WATCH',
+                style: widget.subtitleStyle,              
+              ),
               trailing: IconButton(
                       onPressed: () async {
                         await setFavorite();
