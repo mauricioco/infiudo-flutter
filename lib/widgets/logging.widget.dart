@@ -15,21 +15,23 @@ class LoggingWidgetState extends State<LoggingWidget> {
     return IgnorePointer(
       ignoring: true,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 256, minHeight: 0),
+        constraints: const BoxConstraints(maxHeight: 96, minHeight: 0),
         child:
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.5),
-            ),
-            child:
-              Consumer<AppState>(
-                builder: (context, appState, child) {
-                  return DefaultTextStyle(
-                      style: const TextStyle(fontSize: 14),
-                      child: Text(appState.displayLog)
-                  );
-                },
-              )
+          SafeArea(child: 
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.5),
+              ),
+              child:
+                Consumer<AppState>(
+                  builder: (context, appState, child) {
+                    return DefaultTextStyle(
+                        style: const TextStyle(fontSize: 8),
+                        child: Text(appState.displayLog)
+                    );
+                  },
+                )
+            )
           )
       )
     );
